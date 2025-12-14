@@ -1,0 +1,35 @@
+{
+    "include": [
+        "object_cheating",
+        "Güvenli Sınav Denetim Sistemi"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        ".web",
+        "node_modules"
+    ],
+    "typeCheckingMode": "off",
+    "reportMissingImports": "none",
+    "reportMissingTypeStubs": false,
+    "reportAttributeAccessIssue": "none",
+    "reportUnknownMemberType": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnknownVariableType": "none",
+    "reportUnknownLambdaType": "none",
+    "reportUnknownParameterType": "none",
+    "reportMissingParameterType": "none",
+    "reportCallIssue": "none",
+    "reportGeneralTypeIssues": "none",
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Windows",
+    "executionEnvironments": [
+        {
+            "root": ".",
+            "pythonVersion": "3.12",
+            "pythonPlatform": "Windows",
+            "extraPaths": [
+                "./object_cheating"
+            ]
+        }
+    ]
+}

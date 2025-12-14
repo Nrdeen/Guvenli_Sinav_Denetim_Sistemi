@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kamera Izleme - Sinav Guvenlik Sistemi</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+        }
+        .modal-header h2 {
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Session Info */
+        .session-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .session-info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .session-info-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        /* Student Tabs */
+        .student-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .student-tab {
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .student-tab:hover {
+            border-color: var(--primary);
+        }
+        .student-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .student-tab .badge {
+            display: inline-block;
+            margin-left: 0.5rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.2);
+        }
+        .student-tab:not(.active) .badge {
+            background: var(--border);
+        }
+        
+        /* Student Content */
+        .student-content {
+            display: none;
+        }
+        .student-content.active {
+            display: block;
+        }
+        .student-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-card {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .summary-card .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .priority-high .value { color: var(--danger); }
+        .priority-medium .value { color: var(--warning); }
+        .priority-low .value { color: var(--success); }
+        
+        /* Violations Table */
+        .violations-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .violations-table th,
+        .violations-table td {
+            padding: 0.875rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .violations-table th {
+            background: var(--bg);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .violations-table tr:hover {
+            background: var(--bg);
+        }
+        .violation-type {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .violation-icon {
+            font-size: 1.25rem;
+        }
+        .priority-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .priority-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+        .priority-badge.medium {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--warning);
+        }
+        .priority-badge.low {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sinav Guvenlik Sistemi</h1>
+                <p class="sidebar-subtitle">Izleme ve Denetim</p>
+            </div>
+            <nav class="nav">
+                <a href="/">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Kontrol Paneli
+                </a>
+                <a href="/students" class="active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Kamera Izleme
+                </a>
+                <a href="/recordings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                        <line x1="7" y1="2" x2="7" y2="22"></line>
+                        <line x1="17" y1="2" x2="17" y2="22"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <line x1="2" y1="7" x2="7" y2="7"></line>
+                        <line x1="2" y1="17" x2="7" y2="17"></line>
+                        <line x1="17" y1="17" x2="22" y2="17"></line>
+                        <line x1="17" y1="7" x2="22" y2="7"></line>
+                    </svg>
+                    Ihlal Goruntuleri
+                </a>
+                <a href="/reports">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Oturum Raporlari
+                </a>
+                <a href="/alerts">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Ihlal Uyarilari
+                </a>
+                <a href="/settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Ayarlar
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="shutdownSystem()" style="color: var(--danger); text-decoration: none; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                    Sistemi Kapat
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Kamera Izleme</h1>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Kamera oturum gecmisi ve ogrenci detaylari</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat">
+                    <span class="stat-label">Toplam Oturum</span>
+                    <span class="stat-value" id="total-sessions">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Toplam Ihlal</span>
+                    <span class="stat-value" id="total-violations">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Yuksek Risk</span>
+                    <span class="stat-value" id="high-risk" style="color: var(--danger);">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Orta Risk</span>
+                    <span class="stat-value" id="medium-risk" style="color: var(--warning);">0</span>
+                </div>
+            </div>
+
+            <section class="section-card">
+                <h2>Kamera Oturumlari</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Her oturum icin detaylari goruntuleyebilirsiniz</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Oturum ID</th>
+                            <th>Tarih</th>
+                            <th>Baslangic Saati</th>
+                            <th>Sure (dk)</th>
+                            <th>Toplam Ihlal</th>
+                            <th>Risk Seviyesi</th>
+                            <th style="text-align: right;">Islemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-table">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Yukleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <!-- Session Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Oturum Detaylari</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <p style="text-align: center; color: var(--text-muted);">Yukleniyor...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionsData = [];
+        
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/camera_sessions');
+                const sessions = await response.json();
+                
+                sessionsData = sessions.map((session, idx) => ({
+                    ...session,
+                    sessionId: `SESSION-${String(idx + 1).padStart(3, '0')}`,
+                    idx: idx
+                }));
+                
+                // Calculate stats
+                const totalViolations = sessionsData.reduce((sum, s) => sum + s.violations, 0);
+                const highRisk = sessionsData.filter(s => s.violations > 3).length;
+                const mediumRisk = sessionsData.filter(s => s.violations > 0 && s.violations <= 3).length;
+                
+                document.getElementById('total-sessions').textContent = sessionsData.length;
+                document.getElementById('total-violations').textContent = totalViolations;
+                document.getElementById('high-risk').textContent = highRisk;
+                document.getElementById('medium-risk').textContent = mediumRisk;
+                
+                renderSessions();
+            } catch (err) {
+                console.error('Failed to load sessions:', err);
+                document.getElementById('sessions-table').innerHTML = 
+                    '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Veri yuklenemedi</td></tr>';
+            }
+        }
+        
+        function renderSessions() {
+            const tbody = document.getElementById('sessions-table');
+            
+            if (sessionsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Henuz kamera oturumu yok</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = sessionsData.map((session, idx) => {
+                const duration = Math.floor(Math.random() * 45 + 15);
+                
+                // Determine risk level
+                let risk = 'Dusuk';
+                let riskClass = 'low';
+                if (session.violations > 3) {
+                    risk = 'Yuksek';
+                    riskClass = 'high';
+                } else if (session.violations > 0) {
+                    risk = 'Orta';
+                    riskClass = 'medium';
+                }
+                
+                return `
+                    <tr>
+                        <td style="font-weight: 600;">${session.sessionId}</td>
+                        <td>${session.date}</td>
+                        <td>${session.time}</td>
+                        <td>${duration}</td>
+                        <td>${session.violations}</td>
+                        <td>
+                            <span class="priority-badge ${riskClass}">${risk}</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button onclick="viewDetails('${session.id}', '${session.date}', ${idx})">👁️ Goruntu</button>
+                            <button onclick="downloadSession(${idx})">📥 Indir</button>
+                            <button onclick="deleteSession(${idx}, '${session.sessionId}')" style="background: var(--danger); color: white;">🗑️ Sil</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        async function viewDetails(sessionId, sessionDate, sessionIdx) {
+            document.getElementById('detailsModal').classList.add('active');
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Yukleniyor...</p>';
+            
+            const session = sessionsData[sessionIdx];
+            const duration = Math.floor(Math.random() * 45 + 15);
+            
+            let risk = 'Dusuk';
+            let riskClass = 'low';
+            if (session.violations > 3) {
+                risk = 'Yuksek';
+                riskClass = 'high';
+            } else if (session.violations > 0) {
+                risk = 'Orta';
+                riskClass = 'medium';
+            }
+            
+            try {
+                const response = await fetch(`/api/session/${sessionId}/details`);
+                const data = await response.json();
+                
+                // Session info section
+                const sessionInfoHtml = `
+                    <div class="session-info">
+                        <div class="session-info-item">
+                            <label>Oturum ID</label>
+                            <div class="value">${session.sessionId}</div>
+                        </div>
+                        <div class="session-info-item">
+                            <label>Tarih</label>
+                            <div class="value">${session.date}</div>
+                        </div>
+                        <div class="session-info-item">
+                            <label>Baslangic</label>
+                            <div class="value">${session.time}</div>
+                        </div>
+                        <div class="session-info-item">
+                            <label>Sure</label>
+                            <div class="value">${duration} dk</div>
+                        </div>
+                        <div class="session-info-item">
+                            <label>Toplam Ihlal</label>
+                            <div class="value">${session.violations}</div>
+                        </div>
+                        <div class="session-info-item">
+                            <label>Risk Seviyesi</label>
+                            <div class="value"><span class="priority-badge ${riskClass}">${risk}</span></div>
+                        </div>
+                    </div>
+                `;
+                
+                if (!data.students || data.students.length === 0) {
+                    modalBody.innerHTML = `
+                        ${sessionInfoHtml}
+                        <div class="empty-state">
+                            <div class="icon">✅</div>
+                            <p>Bu oturumda ihlal tespit edilmedi</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create student tabs
+                const tabsHtml = data.students.map((student, idx) => `
+                    <button class="student-tab ${idx === 0 ? 'active' : ''}" onclick="showStudent(${idx})">
+                        ${student.name}
+                        <span class="badge">${student.total}</span>
+                    </button>
+                `).join('');
+                
+                // Create student contents
+                const contentsHtml = data.students.map((student, idx) => {
+                    const violationsHtml = student.violations.length > 0 ? `
+                        <table class="violations-table">
+                            <thead>
+                                <tr>
+                                    <th>Ihlal Tipi</th>
+                                    <th>Zamani</th>
+                                    <th>Oncelik</th>
+                                    <th>Detay</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${student.violations.map(v => {
+                                    const priorityClass = v.priority === 'Yuksek' ? 'high' : v.priority === 'Orta' ? 'medium' : 'low';
+                                    return `
+                                        <tr>
+                                            <td>
+                                                <div class="violation-type">
+                                                    <span class="violation-icon">${v.icon}</span>
+                                                    <span>${v.type}</span>
+                                                </div>
+                                            </td>
+                                            <td><code>${v.time}</code></td>
+                                            <td>
+                                                <span class="priority-badge ${priorityClass}">${v.priority}</span>
+                                            </td>
+                                            <td>${v.detail}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Bu ogrenci icin ihlal yok</p>';
+                    
+                    return `
+                        <div class="student-content ${idx === 0 ? 'active' : ''}" id="student-${idx}">
+                            <div class="student-summary">
+                                <div class="summary-card">
+                                    <div class="value">${student.total}</div>
+                                    <div class="label">Toplam Ihlal</div>
+                                </div>
+                                <div class="summary-card priority-high">
+                                    <div class="value">${student.high_priority}</div>
+                                    <div class="label">Yuksek Oncelik</div>
+                                </div>
+                                <div class="summary-card priority-medium">
+                                    <div class="value">${student.medium_priority}</div>
+                                    <div class="label">Orta Oncelik</div>
+                                </div>
+                                <div class="summary-card priority-low">
+                                    <div class="value">${student.low_priority}</div>
+                                    <div class="label">Dusuk Oncelik</div>
+                                </div>
+                            </div>
+                            ${violationsHtml}
+                        </div>
+                    `;
+                }).join('');
+                
+                modalBody.innerHTML = `
+                    ${sessionInfoHtml}
+                    <h3 style="margin-bottom: 1rem;">👥 Ogrenci Ihlalleri</h3>
+                    <div class="student-tabs">
+                        ${tabsHtml}
+                    </div>
+                    ${contentsHtml}
+                `;
+            } catch (err) {
+                console.error('Failed to load details:', err);
+                modalBody.innerHTML = `
+                    ${sessionInfoHtml}
+                    <p style="text-align: center; color: var(--danger);">Detaylar yuklenemedi</p>
+                `;
+            }
+        }
+        
+        function downloadSession(sessionIdx) {
+            const session = sessionsData[sessionIdx];
+            const duration = Math.floor(Math.random() * 45 + 15);
+            
+            let risk = 'Dusuk';
+            if (session.violations > 3) risk = 'Yuksek';
+            else if (session.violations > 0) risk = 'Orta';
+            
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Kamera Oturumu - ${session.sessionId}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+                        h1 { color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 10px; }
+                        h2 { color: #2563eb; margin-top: 30px; }
+                        .info-box { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 10px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+                        .info-item { text-align: center; }
+                        .info-label { font-size: 12px; color: #666; text-transform: uppercase; }
+                        .info-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
+                        .high { color: #dc2626; }
+                        .medium { color: #f59e0b; }
+                        .low { color: #22c55e; }
+                        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📹 Kamera Oturumu Raporu - ${session.sessionId}</h1>
+                    
+                    <div class="info-box">
+                        <div class="info-item">
+                            <div class="info-label">Tarih</div>
+                            <div class="info-value">${session.date}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Baslangic</div>
+                            <div class="info-value">${session.time}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Sure</div>
+                            <div class="info-value">${duration} dk</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Kamera</div>
+                            <div class="info-value">${session.camera}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Toplam Ihlal</div>
+                            <div class="info-value">${session.violations}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Risk Seviyesi</div>
+                            <div class="info-value ${risk === 'Yuksek' ? 'high' : risk === 'Orta' ? 'medium' : 'low'}">${risk}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Bu rapor Sinav Guvenlik Sistemi tarafindan otomatik olusturulmustur.</p>
+                        <p>Olusturulma: ${new Date().toLocaleString('tr-TR')}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kamera_oturumu_${session.sessionId}_${session.date.replace(/\//g, '-')}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function showStudent(idx) {
+            // Update tabs
+            document.querySelectorAll('.student-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === idx);
+            });
+            // Update content
+            document.querySelectorAll('.student-content').forEach((content, i) => {
+                content.classList.toggle('active', i === idx);
+            });
+        }
+        
+        async function deleteSession(sessionIdx, sessionId) {
+            if (!confirm(`${sessionId} numarali oturumu silmek istediginizden emin misiniz?\n\nBu islem geri alinamaz!`)) {
+                return;
+            }
+            
+            try {
+                const session = sessionsData[sessionIdx];
+                const response = await fetch(`/api/session/${session.id}/delete`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // Remove from local data
+                    sessionsData.splice(sessionIdx, 1);
+                    
+                    // Update stats
+                    const totalViolations = sessionsData.reduce((sum, s) => sum + s.violations, 0);
+                    const highRisk = sessionsData.filter(s => s.violations > 3).length;
+                    const mediumRisk = sessionsData.filter(s => s.violations > 0 && s.violations <= 3).length;
+                    
+                    document.getElementById('total-sessions').textContent = sessionsData.length;
+                    document.getElementById('total-violations').textContent = totalViolations;
+                    document.getElementById('high-risk').textContent = highRisk;
+                    document.getElementById('medium-risk').textContent = mediumRisk;
+                    
+                    // Re-render table
+                    renderSessions();
+                    
+                    alert('Oturum basariyla silindi!');
+                } else {
+                    alert('Oturum silinemedi. Lutfen tekrar deneyin.');
+                }
+            } catch (err) {
+                console.error('Delete failed:', err);
+                alert('Oturum silinirken bir hata olustu.');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+        
+        // Close modal with Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('detailsModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) closeModal();
+        });
+        
+        loadSessions();
+        setInterval(loadSessions, 10000);
+        
+        // Shutdown system function
+        async function shutdownSystem() {
+            if (confirm('Sistemi kapatmak istediginizden emin misiniz?')) {
+                try {
+                    await fetch('/api/shutdown', { method: 'POST' });
+                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><h1>Sistem kapatiliyor...</h1></div>';
+                } catch (e) {
+                    console.error('Shutdown failed:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

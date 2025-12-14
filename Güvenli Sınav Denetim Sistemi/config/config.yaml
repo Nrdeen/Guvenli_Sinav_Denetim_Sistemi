@@ -1,0 +1,78 @@
+alert_system:
+  alert_interval: 10
+  audio_enabled: true
+  volume: 80
+audio_monitoring:
+  enabled: false
+camera:
+  fps: 30
+  resolution: 3840x2160
+  source: 0
+detection:
+  audio_monitoring:
+    enabled: false
+    energy_threshold: 0.001
+    sample_rate: 16000
+    whisper_enabled: false
+    whisper_model: tiny.en
+    zcr_threshold: 0.35
+  eye_tracking:
+    enabled: true
+  eyes:
+    blink_threshold: 0.3
+    consecutive_frames: 3
+    gaze_sensitivity: 15
+    gaze_threshold: 2
+  face:
+    detection_interval: 5
+    min_confidence: 0.8
+  face_detection:
+    enabled: true
+  mouth:
+    movement_threshold: 3
+  mouth_detection:
+    enabled: true
+  multi_face:
+    alert_threshold: 5
+    enabled: true
+  object_detection:
+    enabled: true
+  objects:
+    detection_interval: 5
+    max_fps: 5
+    min_confidence: 0.65
+global:
+  output_path: ./reports
+logging:
+  alert_cooldown: 10
+  alert_system:
+    alert_volume: 0.8
+    cooldown: 10
+    voice_alerts: true
+  log_path: ./logs
+reporting:
+  image_dir: ./reports/generated/images
+  output_dir: ./reports/generated
+  severity_levels:
+    AUDIO_DETECTED: 3
+    FACE_DISAPPEARED: 1
+    GAZE_AWAY: 2
+    MOUTH_MOVING: 3
+    MULTIPLE_FACES: 4
+    OBJECT_DETECTED: 5
+  wkhtmltopdf_path: C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe
+screen:
+  fps: 15
+  monitor_index: 0
+  recording: true
+screen_recording:
+  enabled: true
+video:
+  fps: 30
+  recording_path: ./recordings
+  resolution:
+  - 3840
+  - 2160
+  source: 0
+video_recording:
+  enabled: true

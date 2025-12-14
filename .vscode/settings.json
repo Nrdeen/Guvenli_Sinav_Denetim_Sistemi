@@ -1,0 +1,26 @@
+{
+    "python.defaultInterpreterPath": "C:\\Program Files\\Python312\\python.exe",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/object_cheating",
+        "${workspaceFolder}/Güvenli Sınav Denetim Sistemi/backend"
+    ],
+    "python.analysis.typeCheckingMode": "off",
+    "python.languageServer": "Pylance",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingTypeStubs": "none",
+        "reportAttributeAccessIssue": "none",
+        "reportGeneralTypeIssues": "none",
+        "reportOptionalMemberAccess": "none",
+        "reportOptionalSubscript": "none",
+        "reportPrivateImportUsage": "none",
+        "reportUnboundVariable": "none"
+    },
+    "python.analysis.ignore": [
+        "**/__pycache__",
+        ".web",
+        "node_modules"
+    ]
+}

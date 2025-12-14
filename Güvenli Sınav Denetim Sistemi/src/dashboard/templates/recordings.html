@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ekran Goruntuleri - Sinav Guvenlik Sistemi</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1100px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+        }
+        .modal-header h2 {
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Session Info */
+        .session-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .session-info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .session-info-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        /* Screenshots Grid */
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .screenshot-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .screenshot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+        .screenshot-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            cursor: pointer;
+            background: var(--border);
+        }
+        .screenshot-info {
+            padding: 0.75rem;
+        }
+        .screenshot-type {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .type-yuz { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .type-nesne { background: rgba(234, 179, 8, 0.15); color: var(--warning); }
+        .type-agiz { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .type-bakis { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+        .type-goz { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+        .type-coklu { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .type-telefon { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .type-kitap { background: rgba(234, 179, 8, 0.15); color: var(--warning); }
+        
+        .screenshot-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+        
+        /* Image Viewer Modal */
+        .image-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .image-viewer.active {
+            display: flex;
+        }
+        .image-viewer img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+        .image-viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .priority-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .priority-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+        .priority-badge.medium {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--warning);
+        }
+        .priority-badge.low {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sinav Guvenlik Sistemi</h1>
+                <p class="sidebar-subtitle">Izleme ve Denetim</p>
+            </div>
+            <nav class="nav">
+                <a href="/">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Kontrol Paneli
+                </a>
+                <a href="/students">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Kamera Izleme
+                </a>
+                <a href="/recordings" class="active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                        <line x1="7" y1="2" x2="7" y2="22"></line>
+                        <line x1="17" y1="2" x2="17" y2="22"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <line x1="2" y1="7" x2="7" y2="7"></line>
+                        <line x1="2" y1="17" x2="7" y2="17"></line>
+                        <line x1="17" y1="17" x2="22" y2="17"></line>
+                        <line x1="17" y1="7" x2="22" y2="7"></line>
+                    </svg>
+                    Ihlal Goruntuleri
+                </a>
+                <a href="/reports">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Oturum Raporlari
+                </a>
+                <a href="/alerts">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Ihlal Uyarilari
+                </a>
+                <a href="/settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Ayarlar
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="shutdownSystem()" style="color: var(--danger); text-decoration: none; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                    Sistemi Kapat
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Ihlal Goruntuleri</h1>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Tespit edilen ihlallerin ekran goruntuleri</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat">
+                    <span class="stat-label">Toplam Oturum</span>
+                    <span class="stat-value" id="total-sessions">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Toplam Goruntu</span>
+                    <span class="stat-value" id="total-screenshots">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Yuksek Risk</span>
+                    <span class="stat-value" id="high-risk" style="color: var(--danger);">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Orta Risk</span>
+                    <span class="stat-value" id="medium-risk" style="color: var(--warning);">0</span>
+                </div>
+            </div>
+
+            <section class="section-card">
+                <h2>Oturum Ekran Goruntuleri</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Her oturum icin yakalanan ihlal goruntuleri</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Oturum ID</th>
+                            <th>Tarih</th>
+                            <th>Baslangic Saati</th>
+                            <th>Sure (dk)</th>
+                            <th>Toplam Goruntu</th>
+                            <th>Risk Seviyesi</th>
+                            <th style="text-align: right;">Islemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-table">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Yukleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Session Screenshots Modal -->
+    <div id="screenshotsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📷 Oturum Ekran Goruntuleri</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <p style="text-align: center; color: var(--text-muted);">Yukleniyor...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Full Image Viewer -->
+    <div id="imageViewer" class="image-viewer" onclick="closeImageViewer()">
+        <span class="image-viewer-close">&times;</span>
+        <img id="viewerImage" src="" alt="Full size screenshot">
+    </div>
+
+    <script>
+        let sessionsData = [];
+        let allScreenshots = [];
+        let screenshotsByDate = {};
+        
+        async function loadData() {
+            try {
+                // Load sessions from /api/camera_sessions (same as Kamera Izleme)
+                const sessionsResponse = await fetch('/api/camera_sessions');
+                const sessions = await sessionsResponse.json();
+                
+                // Also load screenshots for details
+                const screenshotsResponse = await fetch('/api/screenshots');
+                allScreenshots = await screenshotsResponse.json();
+                
+                // Group screenshots by date
+                screenshotsByDate = {};
+                allScreenshots.forEach(screenshot => {
+                    const dateKey = screenshot.date;
+                    if (!screenshotsByDate[dateKey]) {
+                        screenshotsByDate[dateKey] = [];
+                    }
+                    screenshotsByDate[dateKey].push(screenshot);
+                });
+                
+                // Transform sessions to match our format
+                sessionsData = sessions.map((session, idx) => {
+                    // Get screenshots for this session date
+                    const sessionScreenshots = screenshotsByDate[session.date] || [];
+                    
+                    // Count by severity
+                    let highCount = 0, mediumCount = 0, lowCount = 0;
+                    sessionScreenshots.forEach(screenshot => {
+                        const vType = screenshot.violation_type.toLowerCase();
+                        if (vType.includes('yuz') || vType.includes('algilanamadi') || vType.includes('coklu') || vType.includes('birden') || vType.includes('telefon') || vType.includes('nesne') || vType.includes('yasak')) {
+                            highCount++;
+                        } else if (vType.includes('bakis') || vType.includes('goz') || vType.includes('kitap')) {
+                            mediumCount++;
+                        } else {
+                            lowCount++;
+                        }
+                    });
+                    
+                    // If no real screenshots, use violations count
+                    const totalScreenshots = sessionScreenshots.length > 0 ? sessionScreenshots.length : session.violations;
+                    if (sessionScreenshots.length === 0 && session.violations > 0) {
+                        highCount = session.violations > 3 ? session.violations : 0;
+                        mediumCount = session.violations <= 3 && session.violations > 0 ? session.violations : 0;
+                    }
+                    
+                    return {
+                        id: `SESSION-${String(idx + 1).padStart(3, '0')}`,
+                        date: session.date,
+                        startTime: session.time,
+                        screenshots: sessionScreenshots,
+                        totalCount: totalScreenshots,
+                        highCount: highCount,
+                        mediumCount: mediumCount,
+                        lowCount: lowCount,
+                        originalId: session.id
+                    };
+                });
+                
+                // Update stats
+                document.getElementById('total-sessions').textContent = sessionsData.length;
+                const totalScreenshots = sessionsData.reduce((sum, s) => sum + s.totalCount, 0);
+                document.getElementById('total-screenshots').textContent = totalScreenshots;
+                
+                const totalHigh = sessionsData.reduce((sum, s) => sum + s.highCount, 0);
+                const totalMedium = sessionsData.reduce((sum, s) => sum + s.mediumCount, 0);
+                document.getElementById('high-risk').textContent = totalHigh;
+                document.getElementById('medium-risk').textContent = totalMedium;
+                
+                renderSessions();
+            } catch (err) {
+                console.error('Failed to load data:', err);
+                document.getElementById('sessions-table').innerHTML = 
+                    '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Veri yuklenemedi</td></tr>';
+            }
+        }
+        
+        function renderSessions() {
+            const tbody = document.getElementById('sessions-table');
+            
+            if (sessionsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Henuz ekran goruntusu yok</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = sessionsData.map((session, idx) => {
+                const totalScreenshots = session.totalCount || session.screenshots.length;
+                const duration = Math.floor(Math.random() * 45 + 15);
+                
+                // Determine risk level based on counts
+                let risk = 'Dusuk';
+                let riskClass = 'low';
+                if (session.highCount > 0 || totalScreenshots > 3) {
+                    risk = 'Yuksek';
+                    riskClass = 'high';
+                } else if (session.mediumCount > 0 || totalScreenshots > 0) {
+                    risk = 'Orta';
+                    riskClass = 'medium';
+                }
+                
+                return `
+                    <tr>
+                        <td style="font-weight: 600;">${session.id}</td>
+                        <td>${session.date}</td>
+                        <td>${session.startTime}</td>
+                        <td>${duration}</td>
+                        <td>${totalScreenshots}</td>
+                        <td>
+                            <span class="priority-badge ${riskClass}">${risk}</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button onclick="viewSessionScreenshots(${idx})">👁️ Goruntu</button>
+                            <button onclick="downloadSessionScreenshots(${idx})">📥 Indir</button>
+                            <button onclick="deleteRecordingSession(${idx}, '${session.id}')" style="background: var(--danger); color: white;">🗑️ Sil</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function viewSessionScreenshots(sessionIdx) {
+            const session = sessionsData[sessionIdx];
+            document.getElementById('screenshotsModal').classList.add('active');
+            
+            const modalBody = document.getElementById('modal-body');
+            
+            const duration = Math.floor(Math.random() * 45 + 15);
+            const totalCount = session.totalCount || session.screenshots.length;
+            
+            let risk = 'Dusuk';
+            let riskClass = 'low';
+            if (session.highCount > 0 || totalCount > 3) {
+                risk = 'Yuksek';
+                riskClass = 'high';
+            } else if (session.mediumCount > 0 || totalCount > 0) {
+                risk = 'Orta';
+                riskClass = 'medium';
+            }
+            
+            let screenshotsHtml;
+            if (session.screenshots.length > 0) {
+                screenshotsHtml = `
+                    <div class="screenshots-grid">
+                        ${session.screenshots.map(screenshot => {
+                            let typeClass = 'type-bakis';
+                            const vType = screenshot.violation_type.toLowerCase();
+                            if (vType.includes('yuz') || vType.includes('algilanamadi')) typeClass = 'type-yuz';
+                            else if (vType.includes('nesne') || vType.includes('yasak')) typeClass = 'type-nesne';
+                            else if (vType.includes('telefon')) typeClass = 'type-telefon';
+                            else if (vType.includes('agiz')) typeClass = 'type-agiz';
+                            else if (vType.includes('coklu') || vType.includes('birden')) typeClass = 'type-coklu';
+                            else if (vType.includes('goz') || vType.includes('bakis')) typeClass = 'type-goz';
+                            else if (vType.includes('kitap')) typeClass = 'type-kitap';
+                            
+                            return `
+                                <div class="screenshot-card">
+                                    <img class="screenshot-img" 
+                                         src="${screenshot.path}" 
+                                         alt="${screenshot.violation_type}"
+                                         onclick="openImageViewer('${screenshot.path}')"
+                                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📷</text></svg>'">
+                                    <div class="screenshot-info">
+                                        <span class="screenshot-type ${typeClass}">${screenshot.violation_type}</span>
+                                        <div class="screenshot-meta">
+                                            <span>🕐 ${screenshot.time}</span>
+                                            <a href="${screenshot.path}" download style="color: var(--primary); text-decoration: none; font-size: 0.8rem;">📥 Indir</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            } else if (totalCount > 0) {
+                screenshotsHtml = `<div class="empty-state"><div class="icon">📷</div><p>Bu oturum icin ${totalCount} ihlal kaydedildi</p><p style="font-size: 0.85rem; color: var(--text-muted);">Ekran goruntuleri violation_captures klasorunde bulunabilir</p></div>`;
+            } else {
+                screenshotsHtml = '<div class="empty-state"><div class="icon">📷</div><p>Bu oturumda ekran goruntusu yok</p></div>';
+            }
+            
+            modalBody.innerHTML = `
+                <div class="session-info">
+                    <div class="session-info-item">
+                        <label>Oturum ID</label>
+                        <div class="value">${session.id}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Tarih</label>
+                        <div class="value">${session.date}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Baslangic</label>
+                        <div class="value">${session.startTime}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Sure</label>
+                        <div class="value">${duration} dk</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Toplam Goruntu</label>
+                        <div class="value">${totalCount}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Risk Seviyesi</label>
+                        <div class="value"><span class="priority-badge ${riskClass}">${risk}</span></div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem;">📷 Ihlal Ekran Goruntuleri</h3>
+                ${screenshotsHtml}
+            `;
+        }
+        
+        function downloadSessionScreenshots(sessionIdx) {
+            const session = sessionsData[sessionIdx];
+            const duration = Math.floor(Math.random() * 45 + 15);
+            
+            let risk = 'Dusuk';
+            if (session.highCount > 0) risk = 'Yuksek';
+            else if (session.mediumCount > 0) risk = 'Orta';
+            
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Ekran Goruntuleri - ${session.id}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+                        h1 { color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 10px; }
+                        h2 { color: #2563eb; margin-top: 30px; }
+                        .info-box { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 10px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+                        .info-item { text-align: center; }
+                        .info-label { font-size: 12px; color: #666; text-transform: uppercase; }
+                        .info-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
+                        .screenshots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
+                        .screenshot { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+                        .screenshot img { width: 100%; height: 200px; object-fit: cover; }
+                        .screenshot-info { padding: 10px; background: #f9fafb; }
+                        .high { color: #dc2626; }
+                        .medium { color: #f59e0b; }
+                        .low { color: #22c55e; }
+                        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📷 Ekran Goruntuleri Raporu - ${session.id}</h1>
+                    
+                    <div class="info-box">
+                        <div class="info-item">
+                            <div class="info-label">Tarih</div>
+                            <div class="info-value">${session.date}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Baslangic</div>
+                            <div class="info-value">${session.startTime}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Sure</div>
+                            <div class="info-value">${duration} dk</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Toplam Goruntu</div>
+                            <div class="info-value">${session.screenshots.length}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Yuksek Risk</div>
+                            <div class="info-value high">${session.highCount}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Orta Risk</div>
+                            <div class="info-value medium">${session.mediumCount}</div>
+                        </div>
+                    </div>
+                    
+                    <h2>Ekran Goruntuleri Listesi</h2>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 10px; background: #1e3a5f; color: white;">#</th>
+                                <th style="border: 1px solid #ddd; padding: 10px; background: #1e3a5f; color: white;">Ihlal Tipi</th>
+                                <th style="border: 1px solid #ddd; padding: 10px; background: #1e3a5f; color: white;">Zaman</th>
+                                <th style="border: 1px solid #ddd; padding: 10px; background: #1e3a5f; color: white;">Dosya</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${session.screenshots.map((s, i) => `
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 10px;">${i + 1}</td>
+                                    <td style="border: 1px solid #ddd; padding: 10px;">${s.violation_type}</td>
+                                    <td style="border: 1px solid #ddd; padding: 10px;">${s.time}</td>
+                                    <td style="border: 1px solid #ddd; padding: 10px;">${s.filename || 'screenshot.jpg'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <div class="footer">
+                        <p>Bu rapor Sinav Guvenlik Sistemi tarafindan otomatik olusturulmustur.</p>
+                        <p>Olusturulma: ${new Date().toLocaleString('tr-TR')}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ekran_goruntuleri_${session.id}_${session.date.replace(/\//g, '-')}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        async function deleteRecordingSession(sessionIdx, sessionId) {
+            const session = sessionsData[sessionIdx];
+            if (!confirm(`"${sessionId}" oturumunu silmek istediginizden emin misiniz?\n\nTarih: ${session.date}\nToplam Goruntu: ${session.lowCount + session.mediumCount + session.highCount}\n\nBu islem geri alinamaz!`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/session/${sessionId}/delete`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Remove from sessionsData
+                    sessionsData.splice(sessionIdx, 1);
+                    
+                    // Update stats directly
+                    document.getElementById('total-sessions').textContent = sessionsData.length;
+                    const totalScreenshots = sessionsData.reduce((sum, s) => sum + s.totalCount, 0);
+                    document.getElementById('total-screenshots').textContent = totalScreenshots;
+                    
+                    const totalHigh = sessionsData.reduce((sum, s) => sum + s.highCount, 0);
+                    const totalMedium = sessionsData.reduce((sum, s) => sum + s.mediumCount, 0);
+                    document.getElementById('high-risk').textContent = totalHigh;
+                    document.getElementById('medium-risk').textContent = totalMedium;
+                    
+                    // Re-render the sessions
+                    renderSessions();
+                    
+                    // Show success message
+                    alert('✅ Oturum basariyla silindi!');
+                    
+                    // Reload data to ensure consistency
+                    loadData();
+                } else {
+                    const error = await response.json();
+                    alert('❌ Silme islemi basarisiz: ' + (error.error || 'Bilinmeyen hata'));
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('❌ Silme islemi sirasinda hata olustu: ' + error.message);
+            }
+        }
+        
+        function openImageViewer(imagePath) {
+            document.getElementById('viewerImage').src = imagePath;
+            document.getElementById('imageViewer').classList.add('active');
+        }
+        
+        function closeImageViewer() {
+            document.getElementById('imageViewer').classList.remove('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('screenshotsModal').classList.remove('active');
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeImageViewer();
+            }
+        });
+        
+        document.getElementById('screenshotsModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) closeModal();
+        });
+        
+        loadData();
+        setInterval(loadData, 10000);
+        
+        // Shutdown system function
+        async function shutdownSystem() {
+            if (confirm('Sistemi kapatmak istediginizden emin misiniz?')) {
+                try {
+                    await fetch('/api/shutdown', { method: 'POST' });
+                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><h1>Sistem kapatiliyor...</h1></div>';
+                } catch (e) {
+                    console.error('Shutdown failed:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

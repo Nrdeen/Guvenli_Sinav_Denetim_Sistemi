@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ayarlar - Sinav Guvenlik Sistemi</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .settings-section {
+            margin-bottom: 2rem;
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+        .setting-info {
+            flex: 1;
+        }
+        .setting-info label {
+            margin: 0;
+            font-weight: 500;
+        }
+        .setting-info p {
+            margin: 0.25rem 0 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .setting-control {
+            min-width: 200px;
+            text-align: right;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            display: inline-block;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .range-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: 600;
+            background: var(--bg);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        .save-notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .save-notification.success {
+            background: var(--success);
+            color: white;
+        }
+        .save-notification.error {
+            background: var(--danger);
+            color: white;
+        }
+        .save-notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .threshold-input {
+            width: 80px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ></svg>Sinav Guvenlik Sistemi</h1>
+                <p class="sidebar-subtitle">Izleme ve Denetim</p>
+            </div>
+            <nav class="nav">
+                <a href="/">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Kontrol Paneli
+                </a>
+                <a href="/students">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    Kamera Izleme
+                </a>
+                <a href="/recordings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                    Ihlal Goruntuleri
+                </a>
+                <a href="/reports">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Oturum Raporlari
+                </a>
+                <a href="/alerts">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Ihlal Uyarilari
+                </a>
+                <a href="/settings" class="active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Ayarlar
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="shutdownSystem()" style="color: var(--danger); text-decoration: none; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                    Sistemi Kapat
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Ayarlar</h1>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Sistem yapilandirmasi ve tercihler</p>
+            </div>
+
+            <!-- Kamera Ayarlari -->
+            <section class="section-card settings-section">
+                <h2>Kamera Ayarlari</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Kamera kaynagi ve goruntu kalitesi ayarlari</p>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Kamera Kaynagi</label>
+                        <p>0 = Dahili kamera, 1+ = Harici kameralar</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="camera-source" type="number" min="0" max="10" value="0" style="width: 80px; text-align: center;" />
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Cozunurluk</label>
+                        <p>Video yakalama cozunurlugu</p>
+                    </div>
+                    <div class="setting-control">
+                        <select id="resolution" style="min-width: 150px;">
+                            <option value="640x480">640x480</option>
+                            <option value="1280x720">1280x720 (HD)</option>
+                            <option value="1920x1080">1920x1080 (Full HD)</option>
+                            <option value="2560x1440">2560x1440 (2K)</option>
+                            <option value="3840x2160">3840x2160 (4K)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>FPS (Kare Hizi)</label>
+                        <p>Saniyede yakalanan kare sayisi</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="fps" type="number" min="1" max="60" value="30" style="width: 80px; text-align: center;" />
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tespit Ayarlari -->
+            <section class="section-card settings-section">
+                <h2>Tespit Ayarlari</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Aktif tespit modullerini yapilandirin</p>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Yuz Tespiti</label>
+                        <p>Ogrencinin yuzunun kaybolmasini tespit eder</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="face-detection" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Goz Takibi</label>
+                        <p>Bakis yonunu ve goz hareketlerini izler</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="eye-tracking" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Agiz Hareketi Izleme</label>
+                        <p>Konusma veya fisildama hareketlerini tespit eder</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="mouth-detection" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Nesne Tespiti</label>
+                        <p>Telefon, kitap gibi yasakli nesneleri tespit eder</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="object-detection" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Coklu Yuz Tespiti</label>
+                        <p>Birden fazla kisi varligi tespit eder</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="multi-face" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Ses Izleme</label>
+                        <p>Konusma ve ses tespiti yapar</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="audio-monitoring" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem;">Tespit Esikleri</h3>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Yuz Guven Esigi</label>
+                        <p>Minimum yuz tespiti guven orani (0.0 - 1.0)</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="face-confidence" type="number" min="0" max="1" step="0.05" value="0.8" class="threshold-input" />
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Nesne Guven Esigi</label>
+                        <p>Minimum nesne tespiti guven orani (0.0 - 1.0)</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="object-confidence" type="number" min="0" max="1" step="0.05" value="0.65" class="threshold-input" />
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Bakis Hassasiyeti</label>
+                        <p>Bakis kaymasina duyarlilik (1-30)</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="gaze-sensitivity" type="number" min="1" max="30" value="15" class="threshold-input" />
+                    </div>
+                </div>
+            </section>
+
+            <!-- Uyari Ayarlari -->
+            <section class="section-card settings-section">
+                <h2>Uyari Ayarlari</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Bildirim ve uyari tercihlerini duzenleyin</p>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Sesli Uyarilar</label>
+                        <p>Ihlal tespit edildiginde sesli bildirim</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="audio-alerts" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Ses Seviyesi</label>
+                        <p>Uyari sesi yuksekligi</p>
+                    </div>
+                    <div class="setting-control">
+                        <div class="range-container">
+                            <input id="volume" type="range" min="0" max="100" value="80" style="width: 120px;" oninput="updateVolumeDisplay()" />
+                            <span id="volume-display" class="range-value">80%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Uyari Aralik Suresi</label>
+                        <p>Ayni tur uyari arasindaki minimum sure (saniye)</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="alert-interval" type="number" min="1" max="60" value="10" style="width: 80px; text-align: center;" />
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Soguma Suresi</label>
+                        <p>Ihlal kaydi sonrasi bekleme suresi (saniye)</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="alert-cooldown" type="number" min="1" max="60" value="10" style="width: 80px; text-align: center;" />
+                    </div>
+                </div>
+            </section>
+
+            <!-- Kayit Ayarlari -->
+            <section class="section-card settings-section">
+                <h2>Kayit Ayarlari</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Video ve ekran kayit secenekleri</p>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Video Kaydi</label>
+                        <p>Kamera goruntulerini kaydet</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="video-recording" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Ekran Kaydi</label>
+                        <p>Masaustu ekranini kaydet</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="screen-recording" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Ekran FPS</label>
+                        <p>Ekran kaydi kare hizi</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="screen-fps" type="number" min="1" max="30" value="15" style="width: 80px; text-align: center;" />
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Kayit Yolu</label>
+                        <p>Video dosyalarinin kaydedilecegi klasor</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="recording-path" type="text" value="./recordings" style="min-width: 200px;" />
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Log Yolu</label>
+                        <p>Log ve ihlal dosyalarinin kaydedilecegi klasor</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="log-path" type="text" value="./logs" style="min-width: 200px;" />
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <label>Cikti Yolu</label>
+                        <p>Raporlar ve ekran goruntuleri klasoru</p>
+                    </div>
+                    <div class="setting-control">
+                        <input id="output-path" type="text" value="./reports" style="min-width: 200px;" />
+                    </div>
+                </div>
+            </section>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+                <button onclick="resetDefaults()" style="padding: 0.875rem 1.5rem; background: var(--border);">Varsayilanlara Don</button>
+                <button class="primary" onclick="saveSettings()" style="padding: 0.875rem 2rem; font-size: 1rem;">Ayarlari Kaydet</button>
+            </div>
+        </main>
+    </div>
+    
+    <div id="notification" class="save-notification"></div>
+
+    <script>
+        // Update volume display
+        function updateVolumeDisplay() {
+            const volume = document.getElementById('volume').value;
+            document.getElementById('volume-display').textContent = volume + '%';
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'save-notification ' + type + ' show';
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Load current settings from config
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                // Camera settings
+                document.getElementById('camera-source').value = config.camera?.source ?? 0;
+                document.getElementById('fps').value = config.camera?.fps ?? 30;
+                
+                // Resolution - handle both string and array formats
+                let resolution = config.camera?.resolution;
+                if (Array.isArray(resolution)) {
+                    resolution = resolution[0] + 'x' + resolution[1];
+                }
+                document.getElementById('resolution').value = resolution || '1280x720';
+                
+                // Detection settings
+                document.getElementById('face-detection').checked = config.detection?.face_detection?.enabled !== false;
+                document.getElementById('eye-tracking').checked = config.detection?.eye_tracking?.enabled !== false;
+                document.getElementById('mouth-detection').checked = config.detection?.mouth_detection?.enabled !== false;
+                document.getElementById('object-detection').checked = config.detection?.object_detection?.enabled !== false;
+                document.getElementById('multi-face').checked = config.detection?.multi_face?.enabled !== false;
+                document.getElementById('audio-monitoring').checked = config.detection?.audio_monitoring?.enabled === true || config.audio_monitoring?.enabled === true;
+                
+                // Detection thresholds
+                document.getElementById('face-confidence').value = config.detection?.face?.min_confidence ?? 0.8;
+                document.getElementById('object-confidence').value = config.detection?.objects?.min_confidence ?? 0.65;
+                document.getElementById('gaze-sensitivity').value = config.detection?.eyes?.gaze_sensitivity ?? 15;
+                
+                // Alert settings
+                document.getElementById('audio-alerts').checked = config.alert_system?.audio_enabled !== false;
+                document.getElementById('volume').value = config.alert_system?.volume ?? 80;
+                updateVolumeDisplay();
+                document.getElementById('alert-interval').value = config.alert_system?.alert_interval ?? 10;
+                document.getElementById('alert-cooldown').value = config.logging?.alert_cooldown ?? 10;
+                
+                // Recording settings
+                document.getElementById('video-recording').checked = config.video_recording?.enabled !== false;
+                document.getElementById('screen-recording').checked = config.screen_recording?.enabled !== false;
+                document.getElementById('screen-fps').value = config.screen?.fps ?? 15;
+                document.getElementById('recording-path').value = config.video?.recording_path || './recordings';
+                document.getElementById('log-path').value = config.logging?.log_path || './logs';
+                document.getElementById('output-path').value = config.global?.output_path || './reports';
+                
+                console.log('Settings loaded successfully');
+            } catch (err) {
+                console.error('Failed to load settings:', err);
+                showNotification('Ayarlar yuklenemedi!', 'error');
+            }
+        }
+        
+        async function saveSettings() {
+            // Parse resolution
+            const resolutionStr = document.getElementById('resolution').value;
+            const [width, height] = resolutionStr.split('x').map(Number);
+            
+            const settings = {
+                camera: {
+                    source: parseInt(document.getElementById('camera-source').value),
+                    fps: parseInt(document.getElementById('fps').value),
+                    resolution: resolutionStr
+                },
+                video: {
+                    source: parseInt(document.getElementById('camera-source').value),
+                    fps: parseInt(document.getElementById('fps').value),
+                    resolution: [width, height],
+                    recording_path: document.getElementById('recording-path').value
+                },
+                detection: {
+                    face_detection: {
+                        enabled: document.getElementById('face-detection').checked
+                    },
+                    eye_tracking: {
+                        enabled: document.getElementById('eye-tracking').checked
+                    },
+                    mouth_detection: {
+                        enabled: document.getElementById('mouth-detection').checked
+                    },
+                    object_detection: {
+                        enabled: document.getElementById('object-detection').checked
+                    },
+                    multi_face: {
+                        enabled: document.getElementById('multi-face').checked
+                    },
+                    audio_monitoring: {
+                        enabled: document.getElementById('audio-monitoring').checked
+                    },
+                    face: {
+                        min_confidence: parseFloat(document.getElementById('face-confidence').value)
+                    },
+                    objects: {
+                        min_confidence: parseFloat(document.getElementById('object-confidence').value)
+                    },
+                    eyes: {
+                        gaze_sensitivity: parseInt(document.getElementById('gaze-sensitivity').value)
+                    }
+                },
+                audio_monitoring: {
+                    enabled: document.getElementById('audio-monitoring').checked
+                },
+                alert_system: {
+                    audio_enabled: document.getElementById('audio-alerts').checked,
+                    volume: parseInt(document.getElementById('volume').value),
+                    alert_interval: parseInt(document.getElementById('alert-interval').value)
+                },
+                logging: {
+                    log_path: document.getElementById('log-path').value,
+                    alert_cooldown: parseInt(document.getElementById('alert-cooldown').value),
+                    alert_system: {
+                        alert_volume: parseInt(document.getElementById('volume').value) / 100,
+                        cooldown: parseInt(document.getElementById('alert-cooldown').value),
+                        voice_alerts: document.getElementById('audio-alerts').checked
+                    }
+                },
+                video_recording: {
+                    enabled: document.getElementById('video-recording').checked
+                },
+                screen_recording: {
+                    enabled: document.getElementById('screen-recording').checked
+                },
+                screen: {
+                    fps: parseInt(document.getElementById('screen-fps').value),
+                    recording: document.getElementById('screen-recording').checked
+                },
+                global: {
+                    output_path: document.getElementById('output-path').value
+                }
+            };
+            
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('✅ Ayarlar basariyla kaydedildi!', 'success');
+                } else {
+                    showNotification('❌ Hata: ' + (result.error || 'Bilinmeyen hata'), 'error');
+                }
+            } catch (err) {
+                console.error('Failed to save settings:', err);
+                showNotification('❌ Ayarlar kaydedilemedi!', 'error');
+            }
+        }
+        
+        function resetDefaults() {
+            if (!confirm('Tum ayarlar varsayilan degerlere donecek. Emin misiniz?')) {
+                return;
+            }
+            
+            // Camera
+            document.getElementById('camera-source').value = 0;
+            document.getElementById('resolution').value = '1280x720';
+            document.getElementById('fps').value = 30;
+            
+            // Detection
+            document.getElementById('face-detection').checked = true;
+            document.getElementById('eye-tracking').checked = true;
+            document.getElementById('mouth-detection').checked = true;
+            document.getElementById('object-detection').checked = true;
+            document.getElementById('multi-face').checked = true;
+            document.getElementById('audio-monitoring').checked = false;
+            document.getElementById('face-confidence').value = 0.8;
+            document.getElementById('object-confidence').value = 0.65;
+            document.getElementById('gaze-sensitivity').value = 15;
+            
+            // Alerts
+            document.getElementById('audio-alerts').checked = true;
+            document.getElementById('volume').value = 80;
+            updateVolumeDisplay();
+            document.getElementById('alert-interval').value = 10;
+            document.getElementById('alert-cooldown').value = 10;
+            
+            // Recording
+            document.getElementById('video-recording').checked = true;
+            document.getElementById('screen-recording').checked = true;
+            document.getElementById('screen-fps').value = 15;
+            document.getElementById('recording-path').value = './recordings';
+            document.getElementById('log-path').value = './logs';
+            document.getElementById('output-path').value = './reports';
+            
+            showNotification('Varsayilan degerler yuklendi. Kaydetmeyi unutmayin!', 'success');
+        }
+        
+        // Load settings on page load
+        loadSettings();
+        
+        // Shutdown system function
+        async function shutdownSystem() {
+            if (confirm('Sistemi kapatmak istediginizden emin misiniz?')) {
+                try {
+                    await fetch('/api/shutdown', { method: 'POST' });
+                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><h1>Sistem kapatiliyor...</h1></div>';
+                } catch (e) {
+                    console.error('Shutdown failed:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

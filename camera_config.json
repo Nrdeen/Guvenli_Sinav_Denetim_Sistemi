@@ -1,0 +1,12 @@
+{
+  "default_camera_index": 0,
+  "camera_notes": {
+    "0": "عادة كاميرا اللابتوب المدمجة - Usually built-in laptop camera",
+    "1": "عادة كاميرا خارجية (Logitech) - Usually external camera (Logitech)",
+    "2": "كاميرا إضافية - Additional camera"
+  },
+  "instructions": {
+    "ar": "لتغيير الكاميرا الافتراضية، قم بتعديل قيمة default_camera_index",
+    "en": "To change default camera, modify the default_camera_index value"
+  }
+}

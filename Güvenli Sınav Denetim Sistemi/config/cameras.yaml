@@ -1,0 +1,21 @@
+# Classroom Cameras Configuration
+# Add RTSP camera streams for classroom monitoring
+
+cameras:
+  - id: cam01
+    name: "Front Camera"
+    rtsp: "rtsp://192.168.1.20/live"
+  
+  - id: cam02
+    name: "Back Camera"
+    rtsp: "rtsp://192.168.1.21/stream"
+  
+  - id: cam03
+    name: "Side Camera"
+    rtsp: "rtsp://192.168.1.22/main"
+
+# Instructions:
+# 1. Replace RTSP URLs with your actual camera URLs
+# 2. For testing with webcam, you can use index numbers (0, 1, 2)
+# 3. Format: rtsp://username:password@ip:port/stream
+# 4. Test camera connection before exam starts

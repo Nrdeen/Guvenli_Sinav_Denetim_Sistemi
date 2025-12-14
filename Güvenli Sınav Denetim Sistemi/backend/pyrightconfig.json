@@ -1,0 +1,13 @@
+{
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "**/__pycache__"
+    ],
+    "reportMissingImports": "none",
+    "reportMissingTypeStubs": false,
+    "reportAttributeAccessIssue": "none",
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Windows"
+}

@@ -1,0 +1,25 @@
+students:
+- id: ST001
+  name: Nrdeen Anber
+  email: nrdanber@gmail.com
+  photo: ''
+- id: STU001
+  name: أحمد محمد
+  email: ahmed@example.com
+  photo: ''
+- id: STU002
+  name: فاطمة علي
+  email: fatima@example.com
+  photo: ''
+- id: STU003
+  name: محمد حسن
+  email: mohamed@example.com
+  photo: ''
+- id: STU004
+  name: سارة أحمد
+  email: sara@example.com
+  photo: ''
+- id: STU005
+  name: علي محمود
+  email: ali@example.com
+  photo: ''

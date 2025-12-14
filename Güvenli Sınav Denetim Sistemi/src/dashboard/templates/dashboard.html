@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sinav Guvenlik Sistemi - Kontrol Paneli</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Modern gradient background */
+        .main {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+        }
+
+        /* Enhanced header section */
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border-radius: 16px;
+            border: none;
+        }
+
+        .dashboard-title-section h1 {
+            font-size: 2.25rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Enhanced stat cards - uniform light design */
+        .stat-card {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .stat-trend {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Enhanced section cards */
+        .section-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .section-card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .section-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .section-title h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            color: var(--text-primary);
+        }
+
+        .section-title p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .section-link {
+            color: var(--primary);
+            font-size: 0.875rem;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .section-link:hover {
+            gap: 0.5rem;
+            color: var(--primary-dark);
+        }
+
+        /* Enhanced live stream */
+        .live-stream {
+            min-height: 400px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--border);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .camera-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 24px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .camera-status-badge.active {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .camera-status-badge.inactive {
+            background: var(--bg-muted);
+            color: var(--text-muted);
+        }
+
+        .camera-status-badge.checking {
+            background: linear-gradient(135deg, #1560BD 0%, #224C98 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(21, 96, 189, 0.4);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .pulse-dot.animate {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1);
+                box-shadow: 0 0 0 0 currentColor;
+            }
+            50% { 
+                opacity: 0.7; 
+                transform: scale(1.1);
+                box-shadow: 0 0 0 4px transparent;
+            }
+        }
+
+        /* Enhanced alerts */
+        .alerts-container {
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .alert-card {
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+            margin-bottom: 0.875rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .alert-card:hover {
+            background: white;
+            transform: translateX(6px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .alert-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .alert-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.375rem;
+            color: var(--text-primary);
+        }
+
+        .alert-message {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .alert-meta {
+            text-align: right;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .alert-priority {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .alert-card.high .alert-priority {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+            color: #dc2626;
+        }
+
+        .alert-card.medium .alert-priority {
+            background: linear-gradient(135deg, rgba(21, 96, 189, 0.2) 0%, rgba(21, 96, 189, 0.1) 100%);
+            color: #1560BD;
+        }
+
+        .alert-card.low .alert-priority {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+            color: #16a34a;
+        }
+
+        .empty-alerts {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-alerts .icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-alerts p {
+            margin: 0.5rem 0;
+        }
+
+        /* Enhanced table */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: var(--bg-muted);
+        }
+
+        th {
+            text-align: left;
+            padding: 1.125rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-primary);
+            border: none;
+        }
+
+        td {
+            padding: 1.125rem 1.25rem;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-muted);
+            transform: scale(1.01);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-badge.active {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%);
+            color: var(--success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse-glow 2s infinite;
+        }
+
+        /* Scrollbar styling */
+        .alerts-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .alerts-container::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 3px;
+        }
+
+        .alerts-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .alerts-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Stream placeholder enhancement */
+        #stream-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        #stream-placeholder > div {
+            max-width: 400px;
+        }
+
+        #stream-placeholder .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.3;
+        }
+
+        #stream-placeholder p {
+            margin: 0.75rem 0;
+            line-height: 1.6;
+        }
+
+        #stream-placeholder p:first-of-type {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sinav Guvenlik Sistemi</h1>
+                <p class="sidebar-subtitle">Izleme ve Denetim</p>
+            </div>
+            <nav class="nav">
+                <a href="/" class="active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Kontrol Paneli
+                </a>
+                <a href="/students">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Kamera Izleme
+                </a>
+                <a href="/recordings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                        <line x1="7" y1="2" x2="7" y2="22"></line>
+                        <line x1="17" y1="2" x2="17" y2="22"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <line x1="2" y1="7" x2="7" y2="7"></line>
+                        <line x1="2" y1="17" x2="7" y2="17"></line>
+                        <line x1="17" y1="17" x2="22" y2="17"></line>
+                        <line x1="17" y1="7" x2="22" y2="7"></line>
+                    </svg>
+                    Ihlal Goruntuleri
+                </a>
+                <a href="/reports">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Oturum Raporlari
+                </a>
+                <a href="/alerts">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Ihlal Uyarilari
+                </a>
+                <a href="/settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.196-15.804l-4.242 4.242m0 6.364l-4.242 4.242M23 12h-6m-6 0H1m15.804 5.196l-4.242-4.242m0-6.364l-4.242-4.242"></path>
+                    </svg>
+                    Ayarlar
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="shutdownSystem()" style="color: var(--danger); text-decoration: none; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                    Sistemi Kapat
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- Enhanced Header -->
+            <div class="dashboard-header">
+                <div class="dashboard-title-section">
+                    <h1>Kontrol Paneli</h1>
+                    <p class="dashboard-subtitle">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span id="current-time">--:--:--</span>
+                        <span style="margin: 0 0.5rem;">•</span>
+                        <span>Gercek zamanli izleme ve analiz</span>
+                    </p>
+                </div>
+                <div class="live-indicator">
+                    <span class="pulse-dot animate" style="background: var(--success);"></span>
+                    <span>Sistem Aktif</span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card cameras">
+                    <div class="stat-content">
+                        <span class="stat-label">Aktif Kameralar</span>
+                        <span class="stat-value" id="stat-cameras">0</span>
+                        <span class="stat-trend" id="camera-trend">
+                            <span class="stat-trend-value" style="color: var(--text-muted);">--</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-card violations">
+                    <div class="stat-content">
+                        <span class="stat-label">Toplam Ihlaller</span>
+                        <span class="stat-value" id="stat-violations">0</span>
+                        <span class="stat-trend" id="violations-trend">
+                            <span class="stat-trend-value" style="color: var(--text-muted);">--</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-card alerts">
+                    <div class="stat-content">
+                        <span class="stat-label">Canli Uyarilar</span>
+                        <span class="stat-value" id="stat-alerts">0</span>
+                        <span class="stat-trend" id="alerts-trend">
+                            <span class="stat-trend-value" style="color: var(--text-muted);">--</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-card risk">
+                    <div class="stat-content">
+                        <span class="stat-label">Risk Seviyesi</span>
+                        <span class="stat-value" id="stat-risk">0%</span>
+                        <span class="stat-trend" id="risk-trend">
+                            <span class="stat-trend-value" id="risk-level-text" style="color: var(--success);">Dusuk</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Live Stream Section -->
+                <section class="section-card">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <h2>Canli Yayin</h2>
+                            <p id="camera-status-text">Kamera durumu kontrol ediliyor...</p>
+                        </div>
+                        <span id="live-status-badge" class="camera-status-badge inactive">
+                            <span class="pulse-dot"></span>
+                            PASIF
+                        </span>
+                    </div>
+                    <div class="live-stream">
+                        <img id="video-stream" alt="Live Camera Feed" 
+                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 14px; display: none;"
+                             onload="this.style.display='block'; document.getElementById('stream-placeholder').style.display='none';">
+                        <div id="stream-placeholder">
+                            <div>
+                                <div class="icon">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;">
+                                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                    </svg>
+                                </div>
+                                <p>Canli video akisi</p>
+                                <p style="font-size: 0.875rem; color: var(--text-muted);">Kamera baglantisi bekleniyor...</p>
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">main.py uygulamasini baslatiniz</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Son Uyarilar Section -->
+                <section class="section-card">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <h2>Son Uyarilar</h2>
+                            <p>Gercek zamanli ihlal bildirimleri</p>
+                        </div>
+                        <a href="/alerts" class="section-link">Tumu →</a>
+                    </div>
+                    <div class="alerts-container" id="alerts-list">
+                        <div class="empty-alerts">
+                            <div class="icon">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <p style="font-weight: 600;">Henuz uyari yok</p>
+                            <p style="font-size: 0.85rem;">Ihlal tespit edildiginde burada gorunecek</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Kamera Izleme Section -->
+            <section class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <h2>Kamera Izleme</h2>
+                        <p>Aktif kamera durumlari ve ihlal sayilari</p>
+                    </div>
+                    <a href="/students" class="section-link">Detaylar →</a>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kamera ID</th>
+                            <th>Durum</th>
+                            <th>Ihlaller</th>
+                            <th>Son Tespit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cameras-table">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">Veriler yukleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let cameraActive = false;
+        let lastViolationCount = 0;
+        let lastAlertCount = 0;
+        
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('tr-TR');
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        const violationTypes = {
+            'FACE_DISAPPEARED': { label: 'Yuz Algilanamadi', icon: '👤', priority: 'medium' },
+            'MULTIPLE_FACES': { label: 'Birden Fazla Yuz', icon: '👥', priority: 'high' },
+            'OBJECT_DETECTED': { label: 'Yasak Nesne', icon: '📱', priority: 'high' },
+            'PHONE_DETECTED': { label: 'Telefon Algilandi', icon: '📱', priority: 'high' },
+            'BOOK_DETECTED': { label: 'Kitap Algilandi', icon: '📚', priority: 'high' },
+            'MOUTH_MOVING': { label: 'Agiz Hareketi', icon: '👄', priority: 'low' },
+            'GAZE_AWAY': { label: 'Goz Bakisi Kaydi', icon: '👁️', priority: 'medium' },
+            'EYE_TRACKING': { label: 'Goz Takibi Uyarisi', icon: '👁️', priority: 'medium' }
+        };
+        
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                const activeCameras = cameraActive ? 1 : 0;
+                document.getElementById('stat-cameras').textContent = activeCameras;
+                
+                const cameraTrend = document.getElementById('camera-trend');
+                if (cameraActive) {
+                    cameraTrend.innerHTML = '<span class="stat-trend-value" style="color: var(--success);">Aktif</span>';
+                } else {
+                    cameraTrend.innerHTML = '<span class="stat-trend-value" style="color: var(--text-muted);">Pasif</span>';
+                }
+                
+                const violations = data.violations || 0;
+                document.getElementById('stat-violations').textContent = violations;
+                
+                const violationsDiff = violations - lastViolationCount;
+                const violationsTrend = document.getElementById('violations-trend');
+                if (violationsDiff > 0) {
+                    violationsTrend.innerHTML = `<span class="stat-trend-value" style="color: var(--warning);">+${violationsDiff} yeni</span>`;
+                } else if (violations > 0) {
+                    violationsTrend.innerHTML = `<span class="stat-trend-value" style="color: var(--text-muted);">${violations} toplam</span>`;
+                } else {
+                    violationsTrend.innerHTML = '<span class="stat-trend-value" style="color: var(--success);">Ihlal yok</span>';
+                }
+                lastViolationCount = violations;
+                
+                const alerts = data.real_time_alerts || 0;
+                document.getElementById('stat-alerts').textContent = alerts;
+                
+                const alertsDiff = alerts - lastAlertCount;
+                const alertsTrend = document.getElementById('alerts-trend');
+                if (alertsDiff > 0) {
+                    alertsTrend.innerHTML = `<span class="stat-trend-value" style="color: var(--danger);">+${alertsDiff} son 5 dk</span>`;
+                } else if (alerts > 0) {
+                    alertsTrend.innerHTML = `<span class="stat-trend-value" style="color: var(--text-muted);">${alerts} kayit</span>`;
+                } else {
+                    alertsTrend.innerHTML = '<span class="stat-trend-value" style="color: var(--success);">Uyari yok</span>';
+                }
+                lastAlertCount = alerts;
+                
+                const risk = data.risk_level || 0;
+                document.getElementById('stat-risk').textContent = `${risk}%`;
+                
+                const riskTrend = document.getElementById('risk-trend');
+                if (risk > 60) {
+                    riskTrend.innerHTML = '<span class="stat-trend-value" style="color: var(--danger);">Yuksek Risk</span>';
+                } else if (risk > 30) {
+                    riskTrend.innerHTML = '<span class="stat-trend-value" style="color: var(--warning);">Orta Risk</span>';
+                } else {
+                    riskTrend.innerHTML = '<span class="stat-trend-value" style="color: var(--success);">Dusuk Risk</span>';
+                }
+                
+            } catch (err) {
+                console.error('Failed to load stats', err);
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const alerts = await response.json();
+                const container = document.getElementById('alerts-list');
+                
+                if (!alerts || alerts.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-alerts">
+                            <div class="icon">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <p style="font-weight: 600;">Henuz uyari kaydedilmedi</p>
+                            <p style="font-size: 0.85rem;">Ihlal tespit edildiginde burada gorunecek</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                alerts.slice(-5).reverse().forEach((alertText) => {
+                    const parts = alertText.split(' - ');
+                    let datetime = '';
+                    let message = alertText;
+                    let time = '';
+                    
+                    if (parts.length >= 2) {
+                        datetime = parts[0];
+                        message = parts.slice(1).join(' - ');
+                        if (datetime.includes(' ')) {
+                            time = datetime.split(' ')[1] || datetime;
+                        } else {
+                            time = datetime;
+                        }
+                    }
+                    
+                    let alertInfo = { label: 'Uyari', priority: 'medium' };
+                    const upperMessage = message.toUpperCase();
+                    
+                    for (const [key, value] of Object.entries(violationTypes)) {
+                        if (upperMessage.includes(key)) {
+                            alertInfo = value;
+                            break;
+                        }
+                    }
+                    
+                    const priorityText = alertInfo.priority === 'high' ? 'Yuksek' : alertInfo.priority === 'medium' ? 'Orta' : 'Dusuk';
+                    
+                    const alertCard = document.createElement('div');
+                    alertCard.className = `alert-card ${alertInfo.priority}`;
+                    alertCard.innerHTML = `
+                        <div class="alert-content" style="flex: 1;">
+                            <div class="alert-title">${alertInfo.label}</div>
+                            <div class="alert-message">${message}</div>
+                        </div>
+                        <div class="alert-meta">
+                            <div class="alert-time">${time}</div>
+                            <div class="alert-priority">${priorityText}</div>
+                        </div>
+                    `;
+                    container.appendChild(alertCard);
+                });
+            } catch (err) {
+                console.error('Failed to load alerts', err);
+            }
+        }
+
+        async function fetchCameras() {
+            try {
+                const table = document.getElementById('cameras-table');
+                
+                if (!cameraActive) {
+                    table.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 2.5rem;">
+                                <div style="color: var(--text-muted);">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3; margin: 0 auto 1rem;">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                        <circle cx="12" cy="13" r="4"></circle>
+                                    </svg>
+                                    <p style="margin: 0; font-weight: 600;">Aktif kamera bulunamadi</p>
+                                    <p style="font-size: 0.85rem; margin-top: 0.5rem;">main.py uygulamasini baslatiniz</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                table.innerHTML = '';
+                
+                const row = document.createElement('tr');
+                const violations = data.violations || 0;
+                const lastDetection = new Date().toLocaleTimeString('tr-TR');
+                
+                row.innerHTML = `
+                    <td style="font-weight: 700;">Camera_1</td>
+                    <td>
+                        <span class="status-badge active">
+                            <span class="status-dot"></span>
+                            Aktif
+                        </span>
+                    </td>
+                    <td style="font-weight: 600;">${violations}</td>
+                    <td style="color: var(--text-muted); font-family: 'Courier New', monospace;">${lastDetection}</td>
+                `;
+                table.appendChild(row);
+                
+            } catch (err) {
+                console.error('Failed to load cameras', err);
+            }
+        }
+
+        let streamActive = false;
+        let inactiveStrikes = 0;
+        const MAX_INACTIVE_STRIKES = 5;
+
+        function initVideoStream() {
+            const video = document.getElementById('video-stream');
+            const placeholder = document.getElementById('stream-placeholder');
+            
+            video.src = `/video_feed?ts=${Date.now()}`;
+            
+            video.onload = function() {
+                video.style.display = 'block';
+                placeholder.style.display = 'none';
+                streamActive = true;
+            };
+            
+            video.onerror = function() {
+                setTimeout(() => {
+                    if (streamActive) {
+                        video.src = `/video_feed?ts=${Date.now()}`;
+                    }
+                }, 1000);
+            };
+        }
+
+        async function checkCameraStatus() {
+            try {
+                const response = await fetch('/api/camera_status');
+                const data = await response.json();
+                const badge = document.getElementById('live-status-badge');
+                const statusText = document.getElementById('camera-status-text');
+                const video = document.getElementById('video-stream');
+                const placeholder = document.getElementById('stream-placeholder');
+
+                if (data.active) {
+                    inactiveStrikes = 0;
+                    cameraActive = true;
+                    
+                    badge.className = 'camera-status-badge active';
+                    badge.innerHTML = '<span class="pulse-dot animate" style="background: white;"></span> CANLI';
+                    statusText.textContent = `Kamera aktif - Son guncelleme ${data.last_update || ''}`;
+                    
+                    video.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    
+                    if (!streamActive || !video.src) {
+                        video.src = `/video_feed?ts=${Date.now()}`;
+                        streamActive = true;
+                    }
+                } else {
+                    inactiveStrikes += 1;
+                    if (inactiveStrikes >= MAX_INACTIVE_STRIKES) {
+                        cameraActive = false;
+                        
+                        badge.className = 'camera-status-badge inactive';
+                        badge.innerHTML = '<span class="pulse-dot"></span> PASIF';
+                        statusText.textContent = 'Kamera aktif degil. main.py uygulamasini baslatiniz.';
+                        video.style.display = 'none';
+                        placeholder.style.display = 'flex';
+                        streamActive = false;
+                    } else {
+                        badge.className = 'camera-status-badge checking';
+                        badge.innerHTML = '<span class="pulse-dot animate" style="background: #000;"></span> KONTROL';
+                        statusText.textContent = 'Baglanti kontrol ediliyor...';
+                    }
+                }
+                
+                fetchCameras();
+                
+            } catch (err) {
+                console.error('Failed to check camera status', err);
+            }
+        }
+
+        function refreshDashboard() {
+            fetchStats();
+            fetchAlerts();
+        }
+
+        // Shutdown system function
+        async function shutdownSystem() {
+            if (confirm('Sistemi kapatmak istediginizden emin misiniz?\nKamera izleme ve dashboard kapanacak.')) {
+                try {
+                    const response = await fetch('/api/shutdown', { method: 'POST' });
+                    if (response.ok) {
+                        document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; background: #1e293b; color: white;"><div style="text-align: center;"><h1>Sistem Kapatiliyor...</h1><p>Bu pencereyi kapatabilirsiniz.</p></div></div>';
+                    }
+                } catch (e) {
+                    // Server closed, which is expected
+                    document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; background: #1e293b; color: white;"><div style="text-align: center;"><h1>Sistem Kapatildi</h1><p>Bu pencereyi kapatabilirsiniz.</p></div></div>';
+                }
+            }
+        }
+
+        initVideoStream();
+        refreshDashboard();
+        checkCameraStatus();
+        
+        setInterval(refreshDashboard, 5000);
+        setInterval(checkCameraStatus, 2000);
+    </script>
+</body>
+</html>

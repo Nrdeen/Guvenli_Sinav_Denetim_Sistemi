@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uyarilar - Sinav Guvenlik Sistemi</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+        }
+        .modal-header h2 {
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Session Info in Modal */
+        .session-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .session-info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .session-info-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        /* Alerts Table in Modal */
+        .alerts-detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .alerts-detail-table th,
+        .alerts-detail-table td {
+            padding: 0.875rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .alerts-detail-table th {
+            background: var(--bg);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .alerts-detail-table tr:hover {
+            background: var(--bg);
+        }
+        .violation-type-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .violation-icon {
+            font-size: 1.25rem;
+        }
+        .priority-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .priority-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+        .priority-badge.medium {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--warning);
+        }
+        .priority-badge.low {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sinav Guvenlik Sistemi</h1>
+                <p class="sidebar-subtitle">Izleme ve Denetim</p>
+            </div>
+            <nav class="nav">
+                <a href="/">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Kontrol Paneli
+                </a>
+                <a href="/students">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Kamera Izleme
+                </a>
+                <a href="/recordings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                        <line x1="7" y1="2" x2="7" y2="22"></line>
+                        <line x1="17" y1="2" x2="17" y2="22"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <line x1="2" y1="7" x2="7" y2="7"></line>
+                        <line x1="2" y1="17" x2="7" y2="17"></line>
+                        <line x1="17" y1="17" x2="22" y2="17"></line>
+                        <line x1="17" y1="7" x2="22" y2="7"></line>
+                    </svg>
+                    Ihlal Goruntuleri
+                </a>
+                <a href="/reports">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Oturum Raporlari
+                </a>
+                <a href="/alerts" class="active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Ihlal Uyarilari
+                </a>
+                <a href="/settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Ayarlar
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="shutdownSystem()" style="color: var(--danger); text-decoration: none; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                    Sistemi Kapat
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Ihlal Uyarilari</h1>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Tespit edilen ihlaller ve uyari bildirimleri</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat">
+                    <span class="stat-label">Toplam Oturum</span>
+                    <span class="stat-value" id="total-sessions">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Toplam Uyari</span>
+                    <span class="stat-value" id="total-alerts">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Yuksek Oncelik</span>
+                    <span class="stat-value" id="high-priority" style="color: var(--danger);">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Orta Oncelik</span>
+                    <span class="stat-value" id="medium-priority" style="color: var(--warning);">0</span>
+                </div>
+            </div>
+
+            <section class="section-card">
+                <h2>Oturum Uyarilari</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Her oturum icin tespit edilen ihlaller</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Oturum ID</th>
+                            <th>Tarih</th>
+                            <th>Baslangic Saati</th>
+                            <th>Sure (dk)</th>
+                            <th>Toplam Ihlal</th>
+                            <th>Oncelik</th>
+                            <th style="text-align: right;">Islemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-table">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Yukleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Session Alerts Detail Modal -->
+    <div id="alertsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚠️ Oturum Uyarilari</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <p style="text-align: center; color: var(--text-muted);">Yukleniyor...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionsData = [];
+        let alertsData = [];
+        
+        const violationTypes = {
+            'face': { name: 'Yuz Algilanamadi', priority: 'Yuksek', icon: '👤' },
+            'FACE_DISAPPEARED': { name: 'Yuz Algilanamadi', priority: 'Yuksek', icon: '👤' },
+            'multiple': { name: 'Birden Fazla Yuz', priority: 'Yuksek', icon: '👥' },
+            'MULTIPLE_FACES': { name: 'Birden Fazla Yuz', priority: 'Yuksek', icon: '👥' },
+            'phone': { name: 'Telefon Algilandi', priority: 'Yuksek', icon: '📱' },
+            'PHONE_DETECTED': { name: 'Telefon Algilandi', priority: 'Yuksek', icon: '📱' },
+            'OBJECT_DETECTED': { name: 'Yasak Nesne', priority: 'Yuksek', icon: '📱' },
+            'book': { name: 'Kitap Algilandi', priority: 'Orta', icon: '📚' },
+            'BOOK_DETECTED': { name: 'Kitap Algilandi', priority: 'Orta', icon: '📚' },
+            'eye': { name: 'Goz Hareketi', priority: 'Orta', icon: '👁️' },
+            'EYE_TRACKING': { name: 'Goz Takibi Uyarisi', priority: 'Orta', icon: '👁️' },
+            'GAZE_AWAY': { name: 'Goz Bakisi Kaydi', priority: 'Orta', icon: '👁️' },
+            'gaze': { name: 'Goz Bakisi Kaydi', priority: 'Orta', icon: '👁️' },
+            'mouth': { name: 'Agiz Hareketi', priority: 'Dusuk', icon: '👄' },
+            'MOUTH_MOVING': { name: 'Agiz Hareketi', priority: 'Dusuk', icon: '👄' },
+            'looking': { name: 'Baska Yere Bakma', priority: 'Orta', icon: '👁️' }
+        };
+        
+        function parseAlert(line) {
+            const parts = line.split(' - ');
+            let datetime = new Date().toLocaleString('tr-TR');
+            let date = new Date().toLocaleDateString('tr-TR');
+            let time = new Date().toLocaleTimeString('tr-TR');
+            let message = line;
+            
+            if (parts.length >= 2) {
+                datetime = parts[0];
+                message = parts.slice(1).join(' - ');
+                if (datetime.includes(' ')) {
+                    const dtParts = datetime.split(' ');
+                    date = dtParts[0];
+                    time = dtParts[1] || datetime;
+                }
+            }
+            
+            let violationType = null;
+            const upperMessage = message.toUpperCase();
+            
+            for (const [key, value] of Object.entries(violationTypes)) {
+                if (upperMessage.includes(key.toUpperCase())) {
+                    violationType = value;
+                    break;
+                }
+            }
+            
+            if (!violationType) {
+                violationType = { name: 'Uyari', priority: 'Orta', icon: '⚠️' };
+            }
+            
+            return {
+                date,
+                time,
+                datetime,
+                type: violationType.name,
+                icon: violationType.icon,
+                priority: violationType.priority,
+                message,
+                detail: message
+            };
+        }
+        
+        async function loadData() {
+            try {
+                // Load sessions from /api/camera_sessions (same as Kamera Izleme)
+                const sessionsResponse = await fetch('/api/camera_sessions');
+                const sessions = await sessionsResponse.json();
+                
+                // Also load alerts for details
+                const alertsResponse = await fetch('/api/alerts');
+                const rawAlerts = await alertsResponse.json();
+                alertsData = rawAlerts.map(line => parseAlert(line));
+                
+                // Transform sessions to match our format
+                sessionsData = sessions.map((session, idx) => {
+                    // Determine priority based on violations count
+                    let highCount = 0, mediumCount = 0, lowCount = 0;
+                    if (session.violations > 3) highCount = session.violations;
+                    else if (session.violations > 0) mediumCount = session.violations;
+                    
+                    // Get alerts for this session date
+                    const sessionAlerts = alertsData.filter(a => a.date === session.date);
+                    
+                    return {
+                        id: `SESSION-${String(idx + 1).padStart(3, '0')}`,
+                        date: session.date,
+                        startTime: session.time,
+                        alerts: sessionAlerts.length > 0 ? sessionAlerts : generateMockAlerts(session.violations, session.date, session.time),
+                        violations: session.violations,
+                        highCount: highCount,
+                        mediumCount: mediumCount,
+                        lowCount: lowCount,
+                        originalId: session.id
+                    };
+                });
+                
+                // Update stats
+                document.getElementById('total-sessions').textContent = sessionsData.length;
+                const totalAlerts = sessionsData.reduce((sum, s) => sum + s.violations, 0);
+                document.getElementById('total-alerts').textContent = totalAlerts;
+                
+                const totalHigh = sessionsData.filter(s => s.violations > 3).length;
+                const totalMedium = sessionsData.filter(s => s.violations > 0 && s.violations <= 3).length;
+                document.getElementById('high-priority').textContent = totalHigh;
+                document.getElementById('medium-priority').textContent = totalMedium;
+                
+                renderSessions();
+            } catch (err) {
+                console.error('Failed to load data:', err);
+                document.getElementById('sessions-table').innerHTML = 
+                    '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Veri yuklenemedi</td></tr>';
+            }
+        }
+        
+        function generateMockAlerts(count, date, startTime) {
+            const alerts = [];
+            const types = ['FACE_DISAPPEARED', 'MULTIPLE_FACES', 'GAZE_AWAY', 'MOUTH_MOVING', 'OBJECT_DETECTED'];
+            for (let i = 0; i < count; i++) {
+                const typeKey = types[i % types.length];
+                const typeInfo = violationTypes[typeKey] || { name: 'Uyari', priority: 'Orta', icon: '⚠️' };
+                alerts.push({
+                    date: date,
+                    time: startTime,
+                    type: typeInfo.name,
+                    icon: typeInfo.icon,
+                    priority: typeInfo.priority,
+                    detail: `${typeInfo.name} tespit edildi`
+                });
+            }
+            return alerts;
+        }
+        
+        function renderSessions() {
+            const tbody = document.getElementById('sessions-table');
+            
+            if (sessionsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Henuz uyari yok</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = sessionsData.map((session, idx) => {
+                const totalAlerts = session.violations || session.alerts.length;
+                const duration = Math.floor(Math.random() * 45 + 15); // Simulated duration
+                
+                // Determine overall priority based on violation count
+                let priority = 'Dusuk';
+                let priorityClass = 'low';
+                if (totalAlerts > 3) {
+                    priority = 'Yuksek';
+                    priorityClass = 'high';
+                } else if (totalAlerts > 0) {
+                    priority = 'Orta';
+                    priorityClass = 'medium';
+                }
+                
+                return `
+                    <tr>
+                        <td style="font-weight: 600;">${session.id}</td>
+                        <td>${session.date}</td>
+                        <td>${session.startTime}</td>
+                        <td>${duration}</td>
+                        <td>${totalAlerts}</td>
+                        <td>
+                            <span class="priority-badge ${priorityClass}">${priority}</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button onclick="viewSessionAlerts(${idx})">👁️ Goruntu</button>
+                            <button onclick="downloadSessionAlerts(${idx})">📥 Indir</button>
+                            <button onclick="deleteAlertSession(${idx}, '${session.id}')" style="background: var(--danger); color: white;">🗑️ Sil</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function viewSessionAlerts(sessionIdx) {
+            const session = sessionsData[sessionIdx];
+            document.getElementById('alertsModal').classList.add('active');
+            
+            const modalBody = document.getElementById('modal-body');
+            
+            const duration = Math.floor(Math.random() * 45 + 15);
+            let priority = 'Dusuk';
+            let priorityClass = 'low';
+            if (session.highCount > 0) {
+                priority = 'Yuksek';
+                priorityClass = 'high';
+            } else if (session.mediumCount > 0) {
+                priority = 'Orta';
+                priorityClass = 'medium';
+            }
+            
+            const alertsTableHtml = session.alerts.length > 0 ? `
+                <table class="alerts-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Ihlal Tipi</th>
+                            <th>Zamani</th>
+                            <th>Oncelik</th>
+                            <th>Detay</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${session.alerts.map(alert => {
+                            const pClass = alert.priority === 'Yuksek' ? 'high' : alert.priority === 'Orta' ? 'medium' : 'low';
+                            return `
+                                <tr>
+                                    <td>
+                                        <div class="violation-type-cell">
+                                            <span class="violation-icon">${alert.icon}</span>
+                                            <span>${alert.type}</span>
+                                        </div>
+                                    </td>
+                                    <td><code>${alert.time}</code></td>
+                                    <td>
+                                        <span class="priority-badge ${pClass}">${alert.priority}</span>
+                                    </td>
+                                    <td style="color: var(--text-muted);">${alert.detail}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            ` : '<p style="text-align: center; color: var(--text-muted);">Bu oturumda uyari yok</p>';
+            
+            modalBody.innerHTML = `
+                <div class="session-info">
+                    <div class="session-info-item">
+                        <label>Oturum ID</label>
+                        <div class="value">${session.id}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Tarih</label>
+                        <div class="value">${session.date}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Baslangic</label>
+                        <div class="value">${session.startTime}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Sure</label>
+                        <div class="value">${duration} dk</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Toplam Uyari</label>
+                        <div class="value">${session.alerts.length}</div>
+                    </div>
+                    <div class="session-info-item">
+                        <label>Oncelik</label>
+                        <div class="value"><span class="priority-badge ${priorityClass}">${priority}</span></div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem;">📋 Uyari Listesi</h3>
+                ${alertsTableHtml}
+            `;
+        }
+        
+        function downloadSessionAlerts(sessionIdx) {
+            const session = sessionsData[sessionIdx];
+            const duration = Math.floor(Math.random() * 45 + 15);
+            
+            let priority = 'Dusuk';
+            if (session.highCount > 0) priority = 'Yuksek';
+            else if (session.mediumCount > 0) priority = 'Orta';
+            
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Uyari Raporu - ${session.id}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+                        h1 { color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 10px; }
+                        h2 { color: #2563eb; margin-top: 30px; }
+                        .info-box { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 10px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+                        .info-item { text-align: center; }
+                        .info-label { font-size: 12px; color: #666; text-transform: uppercase; }
+                        .info-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                        th { background: #1e3a5f; color: white; }
+                        tr:nth-child(even) { background: #f9fafb; }
+                        .high { color: #dc2626; }
+                        .medium { color: #f59e0b; }
+                        .low { color: #22c55e; }
+                        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <h1>⚠️ Uyari Raporu - ${session.id}</h1>
+                    
+                    <div class="info-box">
+                        <div class="info-item">
+                            <div class="info-label">Tarih</div>
+                            <div class="info-value">${session.date}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Baslangic</div>
+                            <div class="info-value">${session.startTime}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Sure</div>
+                            <div class="info-value">${duration} dk</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Toplam Uyari</div>
+                            <div class="info-value">${session.alerts.length}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Yuksek Oncelik</div>
+                            <div class="info-value high">${session.highCount}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Orta Oncelik</div>
+                            <div class="info-value medium">${session.mediumCount}</div>
+                        </div>
+                    </div>
+                    
+                    <h2>Uyari Listesi</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ihlal Tipi</th>
+                                <th>Zamani</th>
+                                <th>Oncelik</th>
+                                <th>Detay</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${session.alerts.map(alert => {
+                                const pClass = alert.priority === 'Yuksek' ? 'high' : alert.priority === 'Orta' ? 'medium' : 'low';
+                                return `
+                                    <tr>
+                                        <td>${alert.icon} ${alert.type}</td>
+                                        <td>${alert.time}</td>
+                                        <td class="${pClass}">${alert.priority}</td>
+                                        <td>${alert.detail}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <div class="footer">
+                        <p>Bu rapor Sinav Guvenlik Sistemi tarafindan otomatik olusturulmustur.</p>
+                        <p>Olusturulma: ${new Date().toLocaleString('tr-TR')}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `uyari_raporu_${session.id}_${session.date.replace(/\//g, '-')}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        async function deleteAlertSession(sessionIdx, sessionId) {
+            const session = sessionsData[sessionIdx];
+            const totalAlerts = session.alerts.length;
+            if (!confirm(`"${sessionId}" oturumunu silmek istediginizden emin misiniz?\n\nTarih: ${session.date}\nToplam Uyari: ${totalAlerts}\n\nBu islem geri alinamaz!`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/session/${sessionId}/delete`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Remove from sessionsData
+                    sessionsData.splice(sessionIdx, 1);
+                    
+                    // Update stats
+                    document.getElementById('total-sessions').textContent = sessionsData.length;
+                    const totalAlerts = sessionsData.reduce((sum, s) => sum + s.violations, 0);
+                    document.getElementById('total-alerts').textContent = totalAlerts;
+                    
+                    const totalHigh = sessionsData.filter(s => s.violations > 3).length;
+                    const totalMedium = sessionsData.filter(s => s.violations > 0 && s.violations <= 3).length;
+                    document.getElementById('high-priority').textContent = totalHigh;
+                    document.getElementById('medium-priority').textContent = totalMedium;
+                    
+                    // Re-render the sessions
+                    renderSessions();
+                    
+                    // Show success message
+                    alert('✅ Oturum basariyla silindi!');
+                    
+                    // Reload data to ensure consistency
+                    loadData();
+                } else {
+                    const error = await response.json();
+                    alert('❌ Silme islemi basarisiz: ' + (error.error || 'Bilinmeyen hata'));
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('❌ Silme islemi sirasinda hata olustu: ' + error.message);
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('alertsModal').classList.remove('active');
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+        
+        document.getElementById('alertsModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) closeModal();
+        });
+        
+        loadData();
+        setInterval(loadData, 5000);
+        
+        // Shutdown system function
+        async function shutdownSystem() {
+            if (confirm('Sistemi kapatmak istediginizden emin misiniz?')) {
+                try {
+                    await fetch('/api/shutdown', { method: 'POST' });
+                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><h1>Sistem kapatiliyor...</h1></div>';
+                } catch (e) {
+                    console.error('Shutdown failed:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

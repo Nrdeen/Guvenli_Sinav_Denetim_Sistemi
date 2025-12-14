@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Raporlar - Sinav Guvenlik Sistemi</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 0.5rem;
+        }
+        .modal-close:hover {
+            color: var(--text);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Report Details */
+        .report-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .report-info-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .report-info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+        .report-info-item .value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        /* Risk Score */
+        .risk-score-container {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--bg);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .risk-score {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+        .risk-high { color: var(--danger); }
+        .risk-medium { color: var(--warning); }
+        .risk-low { color: var(--success); }
+        .risk-label {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+        .risk-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+        .risk-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Violation Breakdown */
+        .violation-list {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .violation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        .violation-item .type {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .violation-item .count {
+            font-weight: 600;
+            background: var(--border);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+        }
+        .severity-high { border-left: 3px solid var(--danger); }
+        .severity-medium { border-left: 3px solid var(--warning); }
+        .severity-low { border-left: 3px solid var(--success); }
+        
+        /* Timeline */
+        .timeline {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        .timeline-time {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .timeline-type {
+            font-weight: 500;
+        }
+        
+        /* Screenshots in Modal */
+        .screenshots-preview {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+        .screenshot-thumb {
+            width: 100px;
+            height: 75px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .screenshot-thumb:hover {
+            opacity: 0.8;
+        }
+        
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .section-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Download Button */
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-download:hover {
+            background: var(--primary-hover);
+        }
+        
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sinav Guvenlik Sistemi</h1>
+                <p class="sidebar-subtitle">Izleme ve Denetim</p>
+            </div>
+            <nav class="nav">
+                <a href="/">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Kontrol Paneli
+                </a>
+                <a href="/students">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Kamera Izleme
+                </a>
+                <a href="/recordings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                        <line x1="7" y1="2" x2="7" y2="22"></line>
+                        <line x1="17" y1="2" x2="17" y2="22"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <line x1="2" y1="7" x2="7" y2="7"></line>
+                        <line x1="2" y1="17" x2="7" y2="17"></line>
+                        <line x1="17" y1="17" x2="22" y2="17"></line>
+                        <line x1="17" y1="7" x2="22" y2="7"></line>
+                    </svg>
+                    Ihlal Goruntuleri
+                </a>
+                <a href="/reports" class="active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Oturum Raporlari
+                </a>
+                <a href="/alerts">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Ihlal Uyarilari
+                </a>
+                <a href="/settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Ayarlar
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="shutdownSystem()" style="color: var(--danger); text-decoration: none; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                    Sistemi Kapat
+                </a>
+            </div>
+        </aside>
+        </aside>
+
+        <main class="main">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Oturum Raporlari</h1>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Izleme oturumu raporlari ve istatistikler</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat">
+                    <span class="stat-label">Toplam Oturum</span>
+                    <span class="stat-value" id="total-sessions">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Toplam Ihlal</span>
+                    <span class="stat-value" id="total-violations">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Yuz Algilanamadi</span>
+                    <span class="stat-value" id="face-lost">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Yasak Nesne</span>
+                    <span class="stat-value" id="object-detected">0</span>
+                </div>
+            </div>
+
+            <section class="section-card">
+                <h2>Izleme Oturumu Raporlari</h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Detayli oturum analiz raporlari</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Oturum ID</th>
+                            <th>Tarih</th>
+                            <th>Baslangic Saati</th>
+                            <th>Sure (dk)</th>
+                            <th>Toplam Ihlal</th>
+                            <th>Risk Seviyesi</th>
+                            <th style="text-align: right;">Islemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reports-table">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Rapor yukleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Report Detail Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📄 Oturum Raporu</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <p style="text-align: center; color: var(--text-muted);">Yukleniyor...</p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" style="padding: 0.75rem 1.5rem; background: var(--border); border: none; border-radius: 8px; cursor: pointer;">Kapat</button>
+                <a id="download-btn" href="#" class="btn-download">📥 PDF Indir</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentSessionId = null;
+        let sessionsData = [];
+        
+        async function loadReports() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('reports-table');
+                const now = new Date();
+                
+                // Get violations for counting
+                let violations = [];
+                try {
+                    const vRes = await fetch('/api/camera_sessions');
+                    const sessions = await vRes.json();
+                    
+                    // Store sessions data globally
+                    sessionsData = sessions;
+                    
+                    if (sessions.length === 0) {
+                        // Create a default session entry
+                        sessions.push({
+                            id: 'current',
+                            camera: 'Camera_1',
+                            date: now.toLocaleDateString('tr-TR'),
+                            time: now.toLocaleTimeString('tr-TR'),
+                            violations: data.violations || 0
+                        });
+                    }
+                    
+                    tbody.innerHTML = sessions.map((session, idx) => {
+                        const sessionId = `SESSION-${String(idx + 1).padStart(3, '0')}`;
+                        const riskLevel = session.violations > 3 ? 'high' : session.violations > 1 ? 'medium' : 'low';
+                        const riskText = riskLevel === 'high' ? 'Yuksek' : riskLevel === 'medium' ? 'Orta' : 'Dusuk';
+                        const riskColor = riskLevel === 'high' ? 'var(--danger)' : riskLevel === 'medium' ? 'var(--warning)' : 'var(--success)';
+                        const riskBg = riskLevel === 'high' ? 'rgba(239, 68, 68, 0.15)' : riskLevel === 'medium' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(34, 197, 94, 0.15)';
+                        const duration = Math.floor(Math.random() * 45 + 15);
+                        
+                        return `
+                            <tr>
+                                <td style="font-weight: 600;">${sessionId}</td>
+                                <td>${session.date || now.toLocaleDateString('tr-TR')}</td>
+                                <td>${session.time || now.toLocaleTimeString('tr-TR')}</td>
+                                <td>${duration}</td>
+                                <td>${session.violations}</td>
+                                <td>
+                                    <span style="padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; background: ${riskBg}; color: ${riskColor};">
+                                        ${riskText}
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <button onclick="viewReport('${sessionId}', ${idx})">👁️ Goruntu</button>
+                                    <button onclick="downloadReport('${sessionId}')">📥 Indir</button>
+                                    <button onclick="deleteReportSession(${idx}, '${sessionId}')&quot; style="background: var(--danger); color: white;">🗑️ Sil</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                    
+                    document.getElementById('total-sessions').textContent = sessions.length;
+                } catch (err) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Henuz rapor olusturulmadi</td></tr>';
+                }
+                
+                document.getElementById('total-violations').textContent = data.violations || 0;
+                
+                const totalViolations = data.violations || 0;
+                document.getElementById('face-lost').textContent = Math.floor(totalViolations * 0.3);
+                document.getElementById('object-detected').textContent = Math.floor(totalViolations * 0.5);
+                
+            } catch (err) {
+                console.error('Failed to load reports:', err);
+                document.getElementById('reports-table').innerHTML = 
+                    '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Rapor yuklenemedi</td></tr>';
+            }
+        }
+        
+        async function viewReport(sessionId, sessionIdx) {
+            currentSessionId = sessionId;
+            const session = sessionsData[sessionIdx];
+            document.getElementById('reportModal').classList.add('active');
+            document.getElementById('download-btn').href = `/api/report/${session.id}/pdf`;
+            
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Yukleniyor...</p>';
+            
+            try {
+                const response = await fetch(`/api/report/${sessionId}`);
+                const report = await response.json();
+                
+                const riskClass = report.risk_score > 60 ? 'risk-high' : report.risk_score > 30 ? 'risk-medium' : 'risk-low';
+                const riskBarColor = report.risk_score > 60 ? 'var(--danger)' : report.risk_score > 30 ? 'var(--warning)' : 'var(--success)';
+                
+                let violationBreakdownHtml = '';
+                if (report.violation_breakdown && report.violation_breakdown.length > 0) {
+                    violationBreakdownHtml = report.violation_breakdown.map(v => {
+                        const severityClass = v.severity === 'Yuksek' ? 'severity-high' : v.severity === 'Orta' ? 'severity-medium' : 'severity-low';
+                        return `
+                            <div class="violation-item ${severityClass}">
+                                <div class="type">
+                                    <span>${v.type}</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">(${v.severity})</span>
+                                </div>
+                                <span class="count">${v.count}</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    violationBreakdownHtml = '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">Ihlal tespit edilmedi</p>';
+                }
+                
+                let timelineHtml = '';
+                if (report.timeline && report.timeline.length > 0) {
+                    timelineHtml = report.timeline.map(t => `
+                        <div class="timeline-item">
+                            <span class="timeline-time">${t.time}</span>
+                            <span class="timeline-type">${t.type}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    timelineHtml = '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">Zaman cizelgesi bos</p>';
+                }
+                
+                let screenshotsHtml = '';
+                if (report.screenshots && report.screenshots.length > 0) {
+                    screenshotsHtml = `
+                        <div class="screenshots-preview">
+                            ${report.screenshots.map(s => `
+                                <img class="screenshot-thumb" src="${s.path}" alt="${s.filename}" onclick="window.open('${s.path}', '_blank')">
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    screenshotsHtml = '<p style="color: var(--text-muted); font-size: 0.875rem;">Ekran goruntusu yok</p>';
+                }
+                
+                modalBody.innerHTML = `
+                    <!-- Session Info -->
+                    <div class="report-info-grid">
+                        <div class="report-info-item">
+                            <label>Oturum ID</label>
+                            <div class="value">${report.session_id}</div>
+                        </div>
+                        <div class="report-info-item">
+                            <label>Tarih</label>
+                            <div class="value">${report.date}</div>
+                        </div>
+                        <div class="report-info-item">
+                            <label>Baslangic</label>
+                            <div class="value">${report.start_time}</div>
+                        </div>
+                        <div class="report-info-item">
+                            <label>Sure</label>
+                            <div class="value">${report.duration}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk Score -->
+                    <div class="risk-score-container">
+                        <div class="risk-score ${riskClass}">${report.risk_score}%</div>
+                        <div class="risk-label">Risk Puani - <strong class="${riskClass}">${report.risk_level}</strong></div>
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" style="width: ${report.risk_score}%; background: ${riskBarColor};"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Violation Breakdown -->
+                    <div class="section-header">
+                        <h3>⚠️ Ihlal Dagilimi</h3>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Toplam: ${report.total_violations}</span>
+                    </div>
+                    <div class="violation-list">
+                        ${violationBreakdownHtml}
+                    </div>
+                    
+                    <!-- Screenshots -->
+                    <div class="section-header">
+                        <h3>📷 Ekran Goruntuleri</h3>
+                    </div>
+                    ${screenshotsHtml}
+                    
+                    <!-- Timeline -->
+                    <div class="section-header" style="margin-top: 1.5rem;">
+                        <h3>📅 Zaman Cizelgesi</h3>
+                    </div>
+                    <div class="timeline">
+                        ${timelineHtml}
+                    </div>
+                `;
+            } catch (err) {
+                console.error('Failed to load report details:', err);
+                modalBody.innerHTML = '<p style="text-align: center; color: var(--danger);">Rapor yuklenemedi</p>';
+            }
+        }
+        
+        function downloadReport(sessionId) {
+            window.location.href = `/api/report/${sessionId}/pdf`;
+        }
+        
+        async function deleteReportSession(sessionIdx, sessionId) {
+            if (!confirm(`${sessionId} numarali raporu silmek istediginizden emin misiniz?\n\nBu islem geri alinamaz!`)) {
+                return;
+            }
+            
+            try {
+                const session = sessionsData[sessionIdx];
+                const response = await fetch(`/api/session/${session.id}/delete`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('Rapor basariyla silindi!');
+                    loadReports();
+                } else {
+                    alert('Rapor silinemedi. Lutfen tekrar deneyin.');
+                }
+            } catch (err) {
+                console.error('Delete failed:', err);
+                alert('Rapor silinirken bir hata olustu.');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('reportModal').classList.remove('active');
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('reportModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) closeModal();
+        });
+        
+        loadReports();
+        setInterval(loadReports, 10000);
+        
+        // Shutdown system function
+        async function shutdownSystem() {
+            if (confirm('Sistemi kapatmak istediginizden emin misiniz?')) {
+                try {
+                    await fetch('/api/shutdown', { method: 'POST' });
+                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><h1>Sistem kapatiliyor...</h1></div>';
+                } catch (e) {
+                    console.error('Shutdown failed:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

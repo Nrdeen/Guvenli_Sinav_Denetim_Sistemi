@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عارض قاعدة البيانات - EduView</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .menu {
+            display: flex;
+            background: #34495e;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        .menu li {
+            flex: 1;
+        }
+        .menu a {
+            display: block;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .menu a:hover, .menu a.active {
+            background: #3498db;
+        }
+        .content {
+            padding: 30px;
+        }
+        .student-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .student-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .student-info h3 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        .student-info p {
+            margin: 2px 0;
+            color: #6c757d;
+        }
+        .stats {
+            text-align: center;
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .stats h2 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .no-data {
+            text-align: center;
+            color: #6c757d;
+            font-size: 18px;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 عارض قاعدة البيانات - EduView</h1>
+            <p>نظام مراقبة الامتحانات الآمن</p>
+        </div>
+
+        <ul class="menu">
+            <li><a href="#" onclick="showSection('teachers')" id="teachers-link">👨‍🏫 الأساتذة</a></li>
+            <li><a href="#" onclick="showSection('exams')" id="exams-link">📝 الاختبارات</a></li>
+            <li><a href="#" onclick="showSection('students')" id="students-link" class="active">👨‍🎓 الطلاب</a></li>
+            <li><a href="#" onclick="showSection('registrations')" id="registrations-link">📋 التسجيلات</a></li>
+            <li><a href="#" onclick="showSection('sessions')" id="sessions-link">🖥️ الجلسات</a></li>
+            <li><a href="#" onclick="showSection('violations')" id="violations-link">⚠️ الانتهاكات</a></li>
+        </ul>
+
+        <div class="content">
+            <div id="students-section" class="section">
+                <div class="stats">
+                    <h2>👨‍🎓 الطلاب المسجلون</h2>
+                    <p id="student-count">جاري التحميل...</p>
+                </div>
+
+                <div id="students-list">
+                    <!-- البيانات ستُحمل هنا -->
+                </div>
+            </div>
+
+            <div id="teachers-section" class="section" style="display: none;">
+                <div class="stats">
+                    <h2>👨‍🏫 الأساتذة</h2>
+                    <p id="teacher-count">جاري التحميل...</p>
+                </div>
+                <div id="teachers-list"></div>
+            </div>
+
+            <div id="exams-section" class="section" style="display: none;">
+                <div class="stats">
+                    <h2>📝 الاختبارات</h2>
+                    <p id="exam-count">جاري التحميل...</p>
+                </div>
+                <div id="exams-list"></div>
+            </div>
+
+            <div id="registrations-section" class="section" style="display: none;">
+                <div class="stats">
+                    <h2>📋 التسجيلات</h2>
+                    <p id="registration-count">جاري التحميل...</p>
+                </div>
+                <div id="registrations-list"></div>
+            </div>
+
+            <div id="sessions-section" class="section" style="display: none;">
+                <div class="stats">
+                    <h2>🖥️ الجلسات النشطة</h2>
+                    <p id="session-count">جاري التحميل...</p>
+                </div>
+                <div id="sessions-list"></div>
+            </div>
+
+            <div id="violations-section" class="section" style="display: none;">
+                <div class="stats">
+                    <h2>⚠️ الانتهاكات</h2>
+                    <p id="violation-count">جاري التحميل...</p>
+                </div>
+                <div id="violations-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // بيانات تجريبية - في التطبيق الحقيقي ستُجلب من الخادم
+        const sampleData = {
+            students: [
+                { id: 1, student_id: "ST001", full_name: "Nrdeen Anber", email: "nrdanber@gmail.com", created_at: "2025-12-11" },
+                { id: 2, student_id: "STU001", full_name: "أحمد محمد", email: "ahmed@example.com", created_at: "2025-12-12" },
+                { id: 3, student_id: "STU002", full_name: "فاطمة علي", email: "fatima@example.com", created_at: "2025-12-12" },
+                { id: 4, student_id: "STU003", full_name: "محمد حسن", email: "mohamed@example.com", created_at: "2025-12-12" },
+                { id: 5, student_id: "STU004", full_name: "سارة أحمد", email: "sara@example.com", created_at: "2025-12-12" },
+                { id: 6, student_id: "STU005", full_name: "علي محمود", email: "ali@example.com", created_at: "2025-12-12" }
+            ],
+            teachers: [
+                { id: 1, username: "admin", full_name: "المعلم الافتراضي", email: "admin@example.com", created_at: "2025-12-12" }
+            ],
+            exams: [
+                { id: 1, exam_name: "اختبار الرياضيات النهائي", exam_code: "MATH2025", teacher_name: "المعلم الافتراضي", start_time: "2025-12-13 09:00", end_time: "2025-12-13 11:00", duration_minutes: 120, status: "scheduled" }
+            ],
+            registrations: [
+                { id: 1, student_name: "أحمد محمد", student_id: "STU001", exam_name: "اختبار الرياضيات النهائي", exam_code: "MATH2025", registered_at: "2025-12-12", status: "registered" },
+                { id: 2, student_name: "فاطمة علي", student_id: "STU002", exam_name: "اختبار الرياضيات النهائي", exam_code: "MATH2025", registered_at: "2025-12-12", status: "registered" },
+                { id: 3, student_name: "محمد حسن", student_id: "STU003", exam_name: "اختبار الرياضيات النهائي", exam_code: "MATH2025", registered_at: "2025-12-12", status: "registered" },
+                { id: 4, student_name: "سارة أحمد", student_id: "STU004", exam_name: "اختبار الرياضيات النهائي", exam_code: "MATH2025", registered_at: "2025-12-12", status: "registered" },
+                { id: 5, student_name: "علي محمود", student_id: "STU005", exam_name: "اختبار الرياضيات النهائي", exam_code: "MATH2025", registered_at: "2025-12-12", status: "registered" }
+            ],
+            sessions: [],
+            violations: []
+        };
+
+        function showSection(sectionName) {
+            // إخفاء جميع الأقسام
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // إزالة الفئة النشطة من جميع الروابط
+            document.querySelectorAll('.menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // عرض القسم المحدد
+            document.getElementById(sectionName + '-section').style.display = 'block';
+            document.getElementById(sectionName + '-link').classList.add('active');
+
+            // تحميل البيانات
+            loadData(sectionName);
+        }
+
+        function loadData(sectionName) {
+            const data = sampleData[sectionName];
+            const countElement = document.getElementById(sectionName + '-count');
+            const listElement = document.getElementById(sectionName + '-list');
+
+            if (data) {
+                countElement.textContent = `عدد ${getArabicName(sectionName)}: ${data.length}`;
+
+                if (data.length === 0) {
+                    listElement.innerHTML = '<div class="no-data">لا توجد بيانات</div>';
+                } else {
+                    listElement.innerHTML = data.map(item => createCard(item, sectionName)).join('');
+                }
+            }
+        }
+
+        function getArabicName(sectionName) {
+            const names = {
+                students: 'الطلاب',
+                teachers: 'الأساتذة',
+                exams: 'الاختبارات',
+                registrations: 'التسجيلات',
+                sessions: 'الجلسات',
+                violations: 'الانتهاكات'
+            };
+            return names[sectionName] || sectionName;
+        }
+
+        function createCard(item, sectionName) {
+            if (sectionName === 'students') {
+                return `
+                    <div class="student-card">
+                        <div class="student-avatar">${item.full_name.charAt(0)}</div>
+                        <div class="student-info">
+                            <h3>${item.full_name}</h3>
+                            <p><strong>رقم الطالب:</strong> ${item.student_id}</p>
+                            <p><strong>البريد الإلكتروني:</strong> ${item.email}</p>
+                            <p><strong>تاريخ التسجيل:</strong> ${item.created_at}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (sectionName === 'teachers') {
+                return `
+                    <div class="student-card">
+                        <div class="student-avatar">${item.full_name.charAt(0)}</div>
+                        <div class="student-info">
+                            <h3>${item.full_name}</h3>
+                            <p><strong>اسم المستخدم:</strong> ${item.username}</p>
+                            <p><strong>البريد الإلكتروني:</strong> ${item.email}</p>
+                            <p><strong>تاريخ التسجيل:</strong> ${item.created_at}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (sectionName === 'exams') {
+                return `
+                    <div class="student-card">
+                        <div class="student-avatar">📝</div>
+                        <div class="student-info">
+                            <h3>${item.exam_name}</h3>
+                            <p><strong>رمز الاختبار:</strong> ${item.exam_code}</p>
+                            <p><strong>الأستاذ:</strong> ${item.teacher_name}</p>
+                            <p><strong>الوقت:</strong> ${item.start_time} - ${item.end_time}</p>
+                            <p><strong>المدة:</strong> ${item.duration_minutes} دقيقة</p>
+                            <p><strong>الحالة:</strong> ${item.status}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (sectionName === 'registrations') {
+                return `
+                    <div class="student-card">
+                        <div class="student-avatar">📋</div>
+                        <div class="student-info">
+                            <h3>${item.student_name} (${item.student_id})</h3>
+                            <p><strong>الاختبار:</strong> ${item.exam_name} (${item.exam_code})</p>
+                            <p><strong>تاريخ التسجيل:</strong> ${item.registered_at}</p>
+                            <p><strong>الحالة:</strong> ${item.status}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            return '<div class="no-data">نوع البيانات غير مدعوم</div>';
+        }
+
+        // تحميل البيانات الأولية
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData('students');
+        });
+    </script>
+</body>
+</html>
